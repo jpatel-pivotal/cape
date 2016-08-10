@@ -145,7 +145,7 @@ def prepServer(clusterNode,config,nodeCnt):
 
 def hostsFiles(clusterDictionary,config):
     print clusterDictionary["clusterName"] + ": Creating /etc/hosts for Cluster Nodes"
-    clusterPath = "./" + clusterDictionary["clusterName"]
+    clusterPath = "./dockercfg/" + clusterDictionary["clusterName"]
     os.chdir(clusterPath)
     with open ("hosts","w") as hostsFile:
         hostsFile.write("######  CAPE ENTRIES #######\n")
