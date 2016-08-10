@@ -4,39 +4,14 @@ import os
 import ConfigParser
 from ClusterBuilder import ClusterBuilder
 from ClusterBuilder import SoftwareDownload
+from LabBuilder import StudentAccounts
 
 #create -type GPDB/HAWQ/NoDB -name <name> -nodes 8 -pivnet <pivnetid>
 
 def configParse():
     config = ConfigParser.ConfigParser()
-    config.read("config.ini")
-    # SERVER_TYPE = config.get("settings","SERVER_TYPE")
-    # IMAGE = config.get("settings","IMAGE")
-    # ZONE =config.get("settings","ZONE")
-    # DISK_TYPE = config.get("settings","DISK_TYPE")
-    # PROJECT =config.get("settings","PROJECT")
-    # GPADMIN_PW = config.get("settings","GPADMIN_PW")
-    # SSH_USERNAME = config.get("settings","SSH_USERNAME")
-    # SSH_KEY_PATH = config.get("settings","SSH_KEY_PATH")
-    # KEY = config.get("settings","KEY")
-    # SVC_ACCOUNT = config.get("settings","SVC_ACCOUNT")
-    # DISK_SIZE = config.get("settings","DISK_SIZE")
-    # MADLIB=config.get("settings","MADLIB")
-    # PLR=config.get("settings","PLR")
-    # GP_LOADER=config.get("settings","GP_LOADER")
-    # PIVNET_APIKEY=config.get("settings","PIVNET_APIKEY")
-    # BASE_USERNAME=config.get("settings","BASE_USERNAME")
-    # BASE_PASSWORD=config.get("settings","BASE_PASSWORD")
-    # BASE_HOME=config.get("settings","BASE_HOME")
-    # NUM_USERS =config.get("settings","NUM_USERS")
-    # LABS_PATH=config.get("settings","LABS_PATH")
-    # #PIVNET_USERNAME=config.get("settings","PIVNET_USERNAME")
-    # #PIVNET_PASSWORD=config.get("settings","PIVNET_PASSWORD")
-    # GPDB_URL=config.get("settings","GPDB_URL")
-    # MADLIB_URL=config.get("settings","MADLIB_URL")
-    # PLR_URL=config.get("settings","PLR_URL")
-    # GPLOADER_URL=config.get("settings","GPLOADER_URL")
-    # MADLIB_VERSION=config.get("settings","MADLIB_VERSION")
+    config.read("./dockercfg/config.ini")
+   
     return config
 
 
@@ -83,7 +58,10 @@ def cliParse(config):
             SoftwareDownload.downloadSoftware(clusterDictionary,config)
 
         elif (args.type == "hdb"):
-            print "Not Yet Implemented"
+            print "HDB Builder"
+            ClusterBuilder.buildServers(clusterDictionary, config)
+            SoftwareDownload.downloadSoftware(clusterDictionary, config)
+            StudentAccounts.add(clusterDictionary,config)
 
         # if (args.verbose == True):
         #     clusterNodes = ClusterBuilder.buildServers(config)

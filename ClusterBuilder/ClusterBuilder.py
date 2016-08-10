@@ -2,7 +2,6 @@ from libcloud.compute.providers import get_driver
 from libcloud.compute.types import Provider
 import paramiko
 from paramiko import WarningPolicy
-
 import warnings
 import time
 import os
