@@ -3,7 +3,7 @@ import warnings
 import os
 import ConfigParser
 from ClusterBuilder import ClusterBuilder
-
+from ClusterBuilder import SoftwareDownload
 
 #create -type GPDB/HAWQ/NoDB -name <name> -nodes 8 -pivnet <pivnetid>
 
@@ -52,7 +52,7 @@ def cliParse(config):
     parser_stage = subparsers.add_parser("stage", help="Stage a Cluster")
     parser_gpdb = subparsers.add_parser("gpdb", help="Start/Stop, get state of GPDB")
 
-    parser_create.add_argument("--type", dest='type', action="store",help="Type of cluster to be create (gpdb/hdb/plain",required=True)
+    parser_create.add_argument("--type", dest='type', action="store",help="Type of cluster to be create (gpdb/hdb/vanilla",required=True)
     parser_create.add_argument("--name", dest='clustername', action="store",help="Name of Cluster to be Created",required=True)
     parser_create.add_argument("--nodes", dest='nodes', default=1, action="store", help="Number of Nodes to be Created",required=True)
     parser_create.add_argument("-v", dest='verbose', action='store_true',required=False)
@@ -74,15 +74,25 @@ def cliParse(config):
     if (args.subparser_name == "create"):
         clusterDictionary["clusterName"] = args.clustername
         clusterDictionary["nodeQty"] = args.nodes
-        clusterDictionary["clusterType"] = args.type
-        if (args.verbose == True):
-            clusterNodes = ClusterBuilder.buildServers(config)
-            #createCluster(clusterDictionary,False)  #These are opposite because  the logging value is quiet_stdout so True is no logging
+        clusterDictionary["clusterType"] = "pivotal-" + args.type
+        if (args.type == "vanilla"):
+            ClusterBuilder.buildServers(clusterDictionary, config)
+        elif (args.type == "gpdb"):
+            print "GPDB Builder"
+            ClusterBuilder.buildServers(clusterDictionary, config)
+            SoftwareDownload.downloadSoftware(clusterDictionary,config)
 
-        else:
-            ClusterBuilder.buildServers(clusterDictionary,config)
+        elif (args.type == "hdb"):
+            print "Not Yet Implemented"
 
-           # createCluster(clusterDictionary,True)
+        # if (args.verbose == True):
+        #     clusterNodes = ClusterBuilder.buildServers(config)
+        #     #createCluster(clusterDictionary,False)  #These are opposite because  the logging value is quiet_stdout so True is no logging
+        #
+        # else:
+        #     ClusterBuilder.buildServers(clusterDictionary,config)
+        #
+        #    # createCluster(clusterDictionary,True)
 
     # elif (args.subparser_name == "destroy"):
     #     clusterDictionary["clusterName"] = args.clustername

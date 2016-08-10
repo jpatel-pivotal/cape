@@ -4,9 +4,10 @@
 
 #userSetup(){
 #    echo "Setting password for GPADMIN on all Nodes"
-#    sudo echo "p1v0tal"|sudo passwd --stdin gpadmin
-#
-#
+#    sudo echo $1|sudo passwd --stdin gpadmin
+#    sudo echo $2|sudo passwd --stdin root#
+#}
+
 
 
 setupDisk(){
@@ -22,7 +23,6 @@ w
 EOF
 sudo mkdir /data
 sudo sh -c "cat /tmp/fstab.cape >> /etc/fstab"
-#added lazy table
 sudo mkfs.xfs -f /dev/sdb1 -L data
 }
 
@@ -38,11 +38,33 @@ securitySetup(){
 
 networkSetup(){
     sudo sed -i 's|[#]*PasswordAuthentication no|PasswordAuthentication yes|g' /etc/ssh/sshd_config
-    sudo sed -i 's|UsePAM no|UsePAM yes|g' /etc/ssh/sshd_config
+    sudo sed -i 's|PermitRootLogin no|PermitRootLogin yes|g' /etc/ssh/sshd_config
+        sudo sed -i 's|UsePAM no|UsePAM yes|g' /etc/ssh/sshd_config
+
     #sudo sh -c "echo 'Defaults \!requiretty' > /etc/sudoers.d/888-dont-requiretty"
     sudo sh -c "cat '/tmp/sysctl.conf.cape' >> /etc/sysctl.conf"
     sudo sh -c "cat '/tmp/limits.conf.cape' >> /etc/security/limits.conf"
 }
+
+installSoftware(){
+    echo "Install Required Software"
+    sudo yum -y install httpd java-1.8.0-openjdk java-1.8.0-openjdk-devel epel-release python-pip git python-argparse
+    sudo pip install sh
+
+}
+
+serverSetup(){
+    echo "Setup RC.D"
+    sudo sh -c "echo 'if test -f /sys/kernel/mm/transparent_hugepage/enabled; then echo never > /sys/kernel/mm/redhat_transparent_hugepage/enabled; fi' >> /etc/rc.local"
+    sudo sh -c "echo 'if test -f /sys/kernel/mm/transparent_hugepage/defrag; then echo never > /sys/kernel/mm/redhat_transparent_hugepage/defrag; fi' >> /etc/rc.local"
+
+
+}
+
+
+
+
+
 
 
 #installGPDBbins(){
@@ -72,13 +94,11 @@ networkSetup(){
 
 
 _main() {
-    userSetup
     securitySetup
     networkSetup
-    #installGPDBbins
-    #downloadExtensions
     setupDisk
-
+    installSoftware
+    serverSetup
 
 
 
