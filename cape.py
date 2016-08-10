@@ -11,7 +11,7 @@ from LabBuilder import StudentAccounts
 def configParse():
     config = ConfigParser.ConfigParser()
     config.read("./dockercfg/config.ini")
-   
+
     return config
 
 
