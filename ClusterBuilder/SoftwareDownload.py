@@ -4,12 +4,13 @@ import warnings
 import requests
 import json
 import time
+import os
 
-def downloadSoftware(clusterDictionary,config):
+def downloadSoftware(clusterDictionary):
     print clusterDictionary["clusterType"]
     warnings.simplefilter("ignore")
     package = clusterDictionary["clusterType"]
-    headers = {"Authorization": "Token "+ config.get("cape-settings", "PIVNET_APIKEY")}
+    headers = {"Authorization": "Token "+ os.environ.get("PIVNET_APIKEY")}
 
     # FIND PRODUCT
     response = requests.get("https://network.pivotal.io/api/v2/products")
@@ -72,7 +73,7 @@ def downloadSoftware(clusterDictionary,config):
                         downloads.append(downloadFile)
             elif "Analytics" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
-                    if config.get("cape-settings", "MADLIB_VERSION") in file["name"]:
+                    if os.environ.get("MADLIB_VERSION") in file["name"]:
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloads.append(downloadFile)
@@ -99,7 +100,7 @@ def downloadSoftware(clusterDictionary,config):
             elif "MADlib" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     print file["name"]
-                    if config.get("cape-settings", "MADLIB_VERSION") in file["name"]:
+                    if os.environ.get("MADLIB_VERSION") in file["name"]:
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloads.append(downloadFile)
@@ -116,11 +117,12 @@ def downloadSoftware(clusterDictionary,config):
 
                     ssh = paramiko.SSHClient()
                     ssh.set_missing_host_key_policy(WarningPolicy())
-                    ssh.connect(node["externalIP"], 22, config.get("gce-settings", "SSH_USERNAME"), None, pkey=None, key_filename=config.get("gce-settings", "SSH_KEY_PATH"),timeout=120)
+                    print os.getcwd()
+                    ssh.connect(node["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None, key_filename=os.environ("CONFIGS_PATH")+os.environ.get("SSH_KEY"),timeout=120)
 
                     for file in downloads:
                         print node["nodeName"]+": Downloading "+str(file['NAME'])
-                        (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token "+config.get("cape-settings", "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL'])+" -O /tmp/"+str(file['NAME']))
+                        (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token "+os.environ.get("PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL'])+" -O /tmp/"+str(file['NAME']))
 
                         stderr.readlines()
                         stdout.readlines()
@@ -149,14 +151,13 @@ def downloadSoftware(clusterDictionary,config):
 
                         ssh = paramiko.SSHClient()
                         ssh.set_missing_host_key_policy(WarningPolicy())
-                        ssh.connect(node["externalIP"], 22, config.get("gce-settings", "SSH_USERNAME"), None, pkey=None,
-                                    key_filename=config.get("gce-settings", "SSH_KEY_PATH"), timeout=120)
+                        ssh.connect(node["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None,
+                                    key_filename=os.environ("CONFIGS_PATH") + os.environ.get("SSH_KEY"), timeout=120)
 
                         for file in downloads:
                             print node["nodeName"] + ": Downloading " + str(file['NAME'])
                             (stdin, stdout, stderr) = ssh.exec_command(
-                                "wget --header=\"Authorization: Token " + config.get("cape-settings",
-                                                                                     "PIVNET_APIKEY") + "\" --post-data='' " + str(
+                                "wget --header=\"Authorization: Token " + os.environ.get("PIVNET_APIKEY") + "\" --post-data='' " + str(
                                     file['URL']) + " -O /tmp/" + str(file['NAME']))
 
                             stderr.readlines()

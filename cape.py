@@ -5,19 +5,12 @@ import ConfigParser
 from ClusterBuilder import ClusterBuilder
 from ClusterBuilder import SoftwareDownload
 from LabBuilder import StudentAccounts
-
-#create -type GPDB/HAWQ/NoDB -name <name> -nodes 8 -pivnet <pivnetid>
-
-def configParse():
-    config = ConfigParser.ConfigParser()
-    config.read("./dockercfg/config.ini")
-
-    return config
+from os.path import join, dirname
+from dotenv import load_dotenv
 
 
 
-def cliParse(config):
-
+def cliParse():
     VALID_ACTION = ["create","destroy","query","stage","dbctl"]
     parser = argparse.ArgumentParser(description='Cluster Automation for Pivotal Education')
     subparsers = parser.add_subparsers(help='sub-command help', dest="subparser_name")
@@ -51,17 +44,17 @@ def cliParse(config):
         clusterDictionary["nodeQty"] = args.nodes
         clusterDictionary["clusterType"] = "pivotal-" + args.type
         if (args.type == "vanilla"):
-            ClusterBuilder.buildServers(clusterDictionary, config)
+            ClusterBuilder.buildServers(clusterDictionary)
         elif (args.type == "gpdb"):
             print "GPDB Builder"
-            ClusterBuilder.buildServers(clusterDictionary, config)
-            SoftwareDownload.downloadSoftware(clusterDictionary,config)
+            ClusterBuilder.buildServers(clusterDictionary)
+            SoftwareDownload.downloadSoftware(clusterDictionary)
 
         elif (args.type == "hdb"):
             print "HDB Builder"
-            ClusterBuilder.buildServers(clusterDictionary, config)
-            SoftwareDownload.downloadSoftware(clusterDictionary, config)
-            StudentAccounts.add(clusterDictionary,config)
+            ClusterBuilder.buildServers(clusterDictionary)
+            SoftwareDownload.downloadSoftware(clusterDictionary)
+            StudentAccounts.add(clusterDictionary)
 
         # if (args.verbose == True):
         #     clusterNodes = ClusterBuilder.buildServers(config)
@@ -101,4 +94,8 @@ def cliParse(config):
 
 
 if __name__ == '__main__':
-    cliParse(configParse())
+    dotenv_path = "./configs/config.env"
+    load_dotenv(dotenv_path)
+    os.environ["CAPE_HOME"]=os.getcwd()
+    os.environ["CONFIGS_PATH"]=os.getcwd()+"/configs/"
+    cliParse()

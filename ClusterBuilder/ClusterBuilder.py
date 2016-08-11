@@ -7,22 +7,23 @@ import time
 import os
 import threading
 
-def buildServers(clusterDictionary,config):
+def buildServers(clusterDictionary):
     warnings.simplefilter("ignore")
     print clusterDictionary["clusterName"] + ": Cluster Creation Started"
 
     if not os.path.exists(clusterDictionary["clusterName"]):
-        os.makedirs("./dockercfg/"+clusterDictionary["clusterName"])
-    clusterPath = "./dockercfg/" + clusterDictionary["clusterName"]
+        os.makedirs("./clusterConfigs/"+clusterDictionary["clusterName"])
+    clusterPath = "./clusterConfigs/" + clusterDictionary["clusterName"]
 
 
     clusterNodes=[]
     ComputeEngine = get_driver(Provider.GCE)
-    driver = ComputeEngine(config.get("gce-settings","SVC_ACCOUNT"), config.get("gce-settings","SVC_ACCOUNT_KEY"),project=config.get("gce-settings","PROJECT"), datacenter=config.get("gce-settings","ZONE"))
+
+    driver = ComputeEngine(os.environ.get("SVC_ACCOUNT"),os.environ.get("CONFIGS_PATH")+os.environ.get("SVC_ACCOUNT_KEY"),project=os.environ.get("PROJECT"), datacenter=os.environ.get("ZONE"))
     sa_scopes = [{'scopes': ['compute', 'storage-full']}]
     print clusterDictionary["clusterName"] + ": Creating "+ str(clusterDictionary["nodeQty"]) + " Nodes"
-    nodes = driver.ex_create_multiple_nodes(clusterDictionary["clusterName"], config.get("gce-settings","SERVER_TYPE"), config.get("gce-settings","IMAGE"),
-                                            int(clusterDictionary["nodeQty"]), config.get("gce-settings","ZONE"),
+    nodes = driver.ex_create_multiple_nodes(clusterDictionary["clusterName"], os.environ.get("SERVER_TYPE"), os.environ.get("IMAGE"),
+                                            int(clusterDictionary["nodeQty"]), os.environ.get("ZONE"),
                                             ex_network='default', ex_tags=None, ex_metadata=None, ignore_errors=True,
                                             use_existing_disk=True, poll_interval=2, external_ip='ephemeral',
                                             ex_disk_type='pd-standard', ex_disk_auto_delete=True,
@@ -43,7 +44,7 @@ def buildServers(clusterDictionary,config):
         nodeName = clusterDictionary["clusterName"] + "-" + str(nodeCnt).zfill(3)
         clusterNode = {}
 
-        volume = driver.create_volume(config.get("gce-settings", "DISK_SIZE"), nodeName + "-data-disk", None, None,
+        volume = driver.create_volume(os.environ.get("DISK_SIZE"), nodeName + "-data-disk", None, None,
                                       None, False, "pd-standard")
 
         clusterNode["nodeName"] = nodeName
@@ -60,7 +61,7 @@ def buildServers(clusterDictionary,config):
         print "     " + nodeName + ": Server Prep Phase Started"
         print "     " + nodeName + ": External IP: " + clusterNode["externalIP"]
         print "     " + nodeName + ": Internal IP: " + clusterNode["internalIP"]
-        prepThread = threading.Thread(target=prepServer, args=(clusterNode,config,nodeCnt))
+        prepThread = threading.Thread(target=prepServer, args=(clusterNode,nodeCnt))
         clusterNodes.append(clusterNode)
         threads.append(prepThread)
         prepThread.start()
@@ -68,12 +69,12 @@ def buildServers(clusterDictionary,config):
         x.join()
     print clusterDictionary["clusterName"] + ": Cluster Configuration Complete"
     clusterDictionary["clusterNodes"]=clusterNodes
-    hostsFiles(clusterDictionary,config)
-    keyShare(clusterDictionary,config)
+    hostsFiles(clusterDictionary)
+    keyShare(clusterDictionary)
 
 
 
-def prepServer(clusterNode,config,nodeCnt):
+def prepServer(clusterNode,nodeCnt):
     warnings.simplefilter("ignore")
     paramiko.util.log_to_file("/tmp/paramiko.log")
     nodeName = clusterNode["nodeName"]
@@ -97,7 +98,7 @@ def prepServer(clusterNode,config,nodeCnt):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(clusterNode["externalIP"], 22, config.get("gce-settings","SSH_USERNAME"), None, pkey=None, key_filename=config.get("gce-settings","SSH_KEY_PATH"),timeout=120)
+            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None, key_filename=os.environ("CONFIGS_PATH")+os.environ.get("SSH_KEY"),timeout=120)
             sftp = ssh.open_sftp()
             sftp.put('./configs/sysctl.conf.cape', '/tmp/sysctl.conf.cape',confirm=True)
             sftp.put('./configs/fstab.cape', '/tmp/fstab.cape',confirm=True)
@@ -107,8 +108,8 @@ def prepServer(clusterNode,config,nodeCnt):
 
 
 
-            gpadminPW = config.get("cape-settings","GPADMIN_PW")
-            rootPW = config.get("cape-settings","ROOT_PW")
+            gpadminPW = os.environ.get("GPADMIN_PW")
+            rootPW = os.environ.get("ROOT_PW")
 
             (stdin, stdout, stderr) = ssh.exec_command("sudo echo "+ gpadminPW + " | sudo passwd --stdin gpadmin")
             stdout.readlines()
@@ -143,9 +144,9 @@ def prepServer(clusterNode,config,nodeCnt):
 
 
 
-def hostsFiles(clusterDictionary,config):
+def hostsFiles(clusterDictionary):
     print clusterDictionary["clusterName"] + ": Creating /etc/hosts for Cluster Nodes"
-    clusterPath = "./dockercfg/" + clusterDictionary["clusterName"]
+    clusterPath = "./clusterConfigs/" + clusterDictionary["clusterName"]
     os.chdir(clusterPath)
     with open ("hosts","w") as hostsFile:
         hostsFile.write("######  CAPE ENTRIES #######\n")
@@ -166,7 +167,7 @@ def hostsFiles(clusterDictionary,config):
                     allhostsFile.write(node["nodeName"] + "\n")
     threads = []
     for clusterNode in clusterDictionary["clusterNodes"]:
-        uploadThread = threading.Thread(target=hostFileUpload, args=(clusterNode,config))
+        uploadThread = threading.Thread(target=hostFileUpload, args=(clusterNode,))
         threads.append(uploadThread)
         uploadThread.start()
     for x in threads:
@@ -174,7 +175,7 @@ def hostsFiles(clusterDictionary,config):
     print "Upload Complete"
 
 
-def verifyCluster(clusterDictionary,config):
+def verifyCluster(clusterDictionary):
     print "Verifying Cluster"
     # Check /etc/hosts
     # SSH to each host and ping 000
@@ -182,7 +183,7 @@ def verifyCluster(clusterDictionary,config):
 
 
 
-def keyShare(clusterDictionary,config):
+def keyShare(clusterDictionary):
 
     # NEED TO THREAD THE KEY SHARE TAKES WAY TOO LONG
 
@@ -204,7 +205,7 @@ def keyShare(clusterDictionary,config):
                 attemptCount += 1
                 ssh = paramiko.SSHClient()
                 ssh.set_missing_host_key_policy(WarningPolicy())
-                ssh.connect(node["externalIP"], 22, "gpadmin", password=config.get("cape-settings","GPADMIN_PW"), timeout=120)
+                ssh.connect(node["externalIP"], 22, "gpadmin", password=os.environ.get("GPADMIN_PW"), timeout=120)
                 (stdin, stdout, stderr) = ssh.exec_command("echo -e  'y\n'|ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''")
                 stderr.readlines()
                 stdout.readlines()
@@ -214,12 +215,12 @@ def keyShare(clusterDictionary,config):
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
                     (stdin, stdout, stderr) = ssh.exec_command(
-                        "sshpass -p " + config.get("cape-settings","GPADMIN_PW") + "  ssh-copy-id  gpadmin@" + node1["nodeName"])
+                        "sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh-copy-id  gpadmin@" + node1["nodeName"])
                     stderr.readlines()
                     stdout.readlines()
 
                 ssh.close()
-                ssh.connect(node["externalIP"], 22, "root", password=config.get("cape-settings", "ROOT_PW"),
+                ssh.connect(node["externalIP"], 22, "root", password=os.environ.get("ROOT_PW"),
                             timeout=120)
                 print "     " + node["nodeName"] + ": Configuring Node"
                 (stdin, stdout, stderr) = ssh.exec_command("echo -e  'y\n'|ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''")
@@ -228,7 +229,7 @@ def keyShare(clusterDictionary,config):
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
                     (stdin, stdout, stderr) = ssh.exec_command(
-                        "sshpass -p " + config.get("cape-settings", "ROOT_PW") + "  ssh-copy-id  root@" + node1[
+                        "sshpass -p " + os.environ.get("ROOT_PW") + "  ssh-copy-id  root@" + node1[
                             "nodeName"])
                     stderr.readlines()
                     stdout.readlines()
@@ -246,10 +247,12 @@ def keyShare(clusterDictionary,config):
 
 
 
-def hostFileUpload(clusterNode,config):
+def hostFileUpload(clusterNode):
     warnings.simplefilter("ignore")
     paramiko.util.log_to_file("/tmp/paramiko.log")
-
+    print clusterNode["externalIP"]
+    print os.environ.get("SSH_USERNAME")
+    print os.environ.get("SSH_KEY")
     connected = False
     attemptCount = 0
 
@@ -258,11 +261,10 @@ def hostFileUpload(clusterNode,config):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(clusterNode["externalIP"], 22, config.get("gce-settings", "SSH_USERNAME"), None,pkey=None, key_filename=config.get("gce-settings", "SSH_KEY_PATH"), timeout=120)
-            print clusterNode["externalIP"]
-            print config.get("gce-settings", "SSH_USERNAME")
-            print config.get("gce-settings", "SSH_KEY_PATH")
-            
+            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None,pkey=None, key_filename=os.environ("CONFIGS_PATH")+os.environ.get("SSH_KEY"), timeout=120)
+
+
+
             sftp = ssh.open_sftp()
             sftp.put("hosts", "/tmp/hosts")
             sftp.put("allhosts", "/tmp/allhosts")
@@ -278,10 +280,5 @@ def hostFileUpload(clusterNode,config):
                 exit()
         finally:
             ssh.close()
-
-
-#  wget -nv http://public-repo-1.hortonworks.com/ambari/centos6/2.x/updates/2.1.2.1/ambari.repo -O /etc/yum.repos.d/ambari.repo
-#  yum install ambari-server
-#  ambari-server setup
 
 

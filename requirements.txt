@@ -10,3 +10,4 @@ pycrypto==2.6.1
 pyOpenSSL==0.13.1
 requests==2.10.0
 rsa==3.4.2
+python-dotenv==0.5.1
