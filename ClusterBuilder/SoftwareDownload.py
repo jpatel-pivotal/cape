@@ -117,7 +117,6 @@ def downloadSoftware(clusterDictionary):
 
                     ssh = paramiko.SSHClient()
                     ssh.set_missing_host_key_policy(WarningPolicy())
-                    print os.getcwd()
                     ssh.connect(node["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None, key_filename=os.environ.get("CONFIGS_PATH")+os.environ.get("SSH_KEY"),timeout=120)
 
                     for file in downloads:
