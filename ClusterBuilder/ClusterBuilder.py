@@ -12,8 +12,8 @@ def buildServers(clusterDictionary,config):
     print clusterDictionary["clusterName"] + ": Cluster Creation Started"
 
     if not os.path.exists(clusterDictionary["clusterName"]):
-        os.makedirs(clusterDictionary["clusterName"])
-    clusterPath = "./" + clusterDictionary["clusterName"]
+        os.makedirs("./dockercfg/"+clusterDictionary["clusterName"])
+    clusterPath = "./dockercfg/" + clusterDictionary["clusterName"]
 
 
     clusterNodes=[]
