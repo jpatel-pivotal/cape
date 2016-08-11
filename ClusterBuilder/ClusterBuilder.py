@@ -98,7 +98,7 @@ def prepServer(clusterNode,nodeCnt):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None, key_filename=os.environ("CONFIGS_PATH")+os.environ.get("SSH_KEY"),timeout=120)
+            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None, key_filename=os.environ.get("CONFIGS_PATH")+os.environ.get("SSH_KEY"),timeout=120)
             sftp = ssh.open_sftp()
             sftp.put('./configs/sysctl.conf.cape', '/tmp/sysctl.conf.cape',confirm=True)
             sftp.put('./configs/fstab.cape', '/tmp/fstab.cape',confirm=True)
@@ -250,9 +250,7 @@ def keyShare(clusterDictionary):
 def hostFileUpload(clusterNode):
     warnings.simplefilter("ignore")
     paramiko.util.log_to_file("/tmp/paramiko.log")
-    print clusterNode["externalIP"]
-    print os.environ.get("SSH_USERNAME")
-    print os.environ.get("SSH_KEY")
+
     connected = False
     attemptCount = 0
 
@@ -261,7 +259,7 @@ def hostFileUpload(clusterNode):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None,pkey=None, key_filename=os.environ("CONFIGS_PATH")+os.environ.get("SSH_KEY"), timeout=120)
+            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None,pkey=None, key_filename=os.environ.get("CONFIGS_PATH")+os.environ.get("SSH_KEY"), timeout=120)
 
 
 
