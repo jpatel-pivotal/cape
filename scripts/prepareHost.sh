@@ -48,7 +48,8 @@ networkSetup(){
 
 installSoftware(){
     echo "Install Required Software"
-    sudo yum -y install httpd java-1.8.0-openjdk java-1.8.0-openjdk-devel epel-release python-pip git python-argparse
+    sudo yum -y install httpd java-1.8.0-openjdk java-1.8.0-openjdk-devel epel-release git python-argparse
+    sudo yum -y python-pip
     sudo pip install sh
 
 }

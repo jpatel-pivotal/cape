@@ -9,7 +9,7 @@ import os
 import threading
 
 
-def add(clusterDictionary,config):
+def add(clusterDictionary):
     print "Adding Student Accounts to all Hosts in Cluster"
     warnings.simplefilter("ignore")
     paramiko.util.log_to_file("/tmp/paramiko.log")
@@ -23,12 +23,12 @@ def add(clusterDictionary,config):
                 attemptCount += 1
                 ssh = paramiko.SSHClient()
                 ssh.set_missing_host_key_policy(WarningPolicy())
-                ssh.connect(node["externalIP"], 22, "root", password=config.get("cape-settings", "ROOT_PW"),
+                ssh.connect(node["externalIP"], 22, "root", password=os.environ.get("ROOT_PW"),
                             timeout=120)
                 (stdin, stdout, stderr) = ssh.exec_command("mkdir -p /data/home")
                 stderr.readlines()
                 stdout.readlines()
-                for student in range(1,int(config.get("lab-settings", "NUM_STUDENTS"))+1):
+                for student in range(1,int(os.environ.get("NUM_STUDENTS"))+1):
                     studnum = str(student)
                     print "Creating Student Account:"+str(student)
 
