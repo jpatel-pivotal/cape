@@ -259,6 +259,10 @@ def hostFileUpload(clusterNode,config):
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
             ssh.connect(clusterNode["externalIP"], 22, config.get("gce-settings", "SSH_USERNAME"), None,pkey=None, key_filename=config.get("gce-settings", "SSH_KEY_PATH"), timeout=120)
+            print clusterNode["externalIP"]
+            print config.get("gce-settings", "SSH_USERNAME")
+            print config.get("gce-settings", "SSH_KEY_PATH")
+            
             sftp = ssh.open_sftp()
             sftp.put("hosts", "/tmp/hosts")
             sftp.put("allhosts", "/tmp/allhosts")
