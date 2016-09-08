@@ -11,15 +11,24 @@ def buildServers(clusterDictionary):
     warnings.simplefilter("ignore")
     print clusterDictionary["clusterName"] + ": Cluster Creation Started"
 
-    if not os.path.exists(clusterDictionary["clusterName"]):
-        os.makedirs("./clusterConfigs/"+clusterDictionary["clusterName"])
+    try:
+        if not os.path.exists(clusterDictionary["clusterName"]):
+            os.makedirs("./clusterConfigs/"+clusterDictionary["clusterName"])
+
+    except OSError:
+        if "test" in clusterDictionary["clusterName"]:
+            print "Testing Mode"
+            os.rmdir("./clusterConfigs/"+clusterDictionary["clusterName"])
+            os.makedirs("./clusterConfigs/" + clusterDictionary["clusterName"])
+        else:
+            print "Cluster Name already exists."
     clusterPath = "./clusterConfigs/" + clusterDictionary["clusterName"]
 
 
     clusterNodes=[]
     ComputeEngine = get_driver(Provider.GCE)
 
-    driver = ComputeEngine(os.environ.get("SVC_ACCOUNT"),os.environ.get("CONFIGS_PATH")+os.environ.get("SVC_ACCOUNT_KEY"),project=os.environ.get("PROJECT"), datacenter=os.environ.get("ZONE"))
+    driver = ComputeEngine(os.environ.get("SVC_ACCOUNT"),str(os.environ.get("CONFIGS_PATH"))+str(os.environ.get("SVC_ACCOUNT_KEY")),project=str(os.environ.get("PROJECT")), datacenter=str(os.environ.get("ZONE")))
     sa_scopes = [{'scopes': ['compute', 'storage-full']}]
     print clusterDictionary["clusterName"] + ": Creating "+ str(clusterDictionary["nodeQty"]) + " Nodes"
     nodes = driver.ex_create_multiple_nodes(clusterDictionary["clusterName"], os.environ.get("SERVER_TYPE"), os.environ.get("IMAGE"),
