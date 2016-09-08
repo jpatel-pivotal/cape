@@ -6,6 +6,9 @@ import warnings
 import time
 import os
 import threading
+import shutil
+import time
+
 
 def buildServers(clusterDictionary):
     warnings.simplefilter("ignore")
@@ -18,7 +21,8 @@ def buildServers(clusterDictionary):
     except OSError:
         if "test" in clusterDictionary["clusterName"]:
             print "Testing Mode"
-            os.rmdir("./clusterConfigs/"+clusterDictionary["clusterName"])
+            timestamp = str(time.time()).split('.')[0]
+            clusterDictionary["clusterName"] = clusterDictionary["clusterName"] + timestamp
             os.makedirs("./clusterConfigs/" + clusterDictionary["clusterName"])
         else:
             print "Cluster Name already exists."
@@ -101,18 +105,18 @@ def prepServer(clusterNode,nodeCnt):
         clusterNode["role"] = "worker"
     connected = False
     attemptCount = 0
-
     while not connected:
         try:
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None, key_filename=os.environ.get("CONFIGS_PATH")+os.environ.get("SSH_KEY"),timeout=120)
+            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None, key_filename=str(os.environ.get("CONFIGS_PATH"))+str(os.environ.get("SSH_KEY")),timeout=120)
             sftp = ssh.open_sftp()
             sftp.put('./configs/sysctl.conf.cape', '/tmp/sysctl.conf.cape',confirm=True)
             sftp.put('./configs/fstab.cape', '/tmp/fstab.cape',confirm=True)
             sftp.put('./configs/limits.conf.cape', '/tmp/limits.conf.cape',confirm=True)
             sftp.put('./scripts/prepareHost.sh', '/tmp/prepareHost.sh',confirm=True)
+
             time.sleep(10)
 
 
@@ -139,7 +143,6 @@ def prepServer(clusterNode,nodeCnt):
             stderr.readlines()
             connected = True
         except Exception as e:
-            #print e
             print "     " +nodeName + ": Attempting SSH Connection"
             time.sleep(3)
 
@@ -214,7 +217,7 @@ def keyShare(clusterDictionary):
                 attemptCount += 1
                 ssh = paramiko.SSHClient()
                 ssh.set_missing_host_key_policy(WarningPolicy())
-                ssh.connect(node["externalIP"], 22, "gpadmin", password=os.environ.get("GPADMIN_PW"), timeout=120)
+                ssh.connect(node["externalIP"], 22, "gpadmin", password=str(os.environ.get("GPADMIN_PW")), timeout=120)
                 (stdin, stdout, stderr) = ssh.exec_command("echo -e  'y\n'|ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''")
                 stderr.readlines()
                 stdout.readlines()
@@ -229,7 +232,7 @@ def keyShare(clusterDictionary):
                     stdout.readlines()
 
                 ssh.close()
-                ssh.connect(node["externalIP"], 22, "root", password=os.environ.get("ROOT_PW"),
+                ssh.connect(node["externalIP"], 22, "root", password=str(os.environ.get("ROOT_PW")),
                             timeout=120)
                 print "     " + node["nodeName"] + ": Configuring Node"
                 (stdin, stdout, stderr) = ssh.exec_command("echo -e  'y\n'|ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''")
@@ -268,7 +271,7 @@ def hostFileUpload(clusterNode):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None,pkey=None, key_filename=os.environ.get("CONFIGS_PATH")+os.environ.get("SSH_KEY"), timeout=120)
+            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None,pkey=None, key_filename=str(os.environ.get("CONFIGS_PATH"))+str(os.environ.get("SSH_KEY")), timeout=120)
 
 
 
@@ -276,7 +279,7 @@ def hostFileUpload(clusterNode):
             sftp.put("hosts", "/tmp/hosts")
             sftp.put("allhosts", "/tmp/allhosts")
             sftp.put("workers", "/tmp/workers")
-            ssh.exec_command("sudo sh -c 'cat /tmp/hosts >> /etc/hosts'")
+            (stdin, stdout, stderr)=ssh.exec_command("sudo sh -c 'cat /tmp/hosts >> /etc/hosts'")
             connected = True
         except Exception as e:
             #print e
