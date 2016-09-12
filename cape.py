@@ -7,7 +7,7 @@ from ClusterBuilder import SoftwareDownload
 from LabBuilder import StudentAccounts
 from os.path import join, dirname
 from dotenv import load_dotenv
-
+from ClusterBuilder import InstallGPDB
 
 
 def cliParse():
@@ -48,8 +48,8 @@ def cliParse():
         elif (args.type == "gpdb"):
             print "GPDB Builder"
             ClusterBuilder.buildServers(clusterDictionary)
-            SoftwareDownload.downloadSoftware(clusterDictionary)
-
+            downloads = SoftwareDownload.downloadSoftware(clusterDictionary)
+            InstallGPDB.installGPDB(clusterDictionary,downloads)
         elif (args.type == "hdb"):
             print "HDB Builder"
             ClusterBuilder.buildServers(clusterDictionary)

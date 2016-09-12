@@ -3,12 +3,10 @@ from libcloud.compute.types import Provider
 import paramiko
 from paramiko import WarningPolicy
 import warnings
-import time
 import os
 import threading
 import shutil
 import time
-
 
 def buildServers(clusterDictionary):
     warnings.simplefilter("ignore")
