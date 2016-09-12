@@ -155,7 +155,6 @@ def prepServer(clusterNode,nodeCnt):
 
 
 def hostsFiles(clusterDictionary):
-    print clusterDictionary["clusterName"] + ": Creating /etc/hosts for Cluster Nodes"
     clusterPath = "./clusterConfigs/" + clusterDictionary["clusterName"]
     os.chdir(clusterPath)
     with open ("hosts","w") as hostsFile:
@@ -182,7 +181,6 @@ def hostsFiles(clusterDictionary):
         uploadThread.start()
     for x in threads:
         x.join()
-    print "Upload Complete"
 
 
 def verifyCluster(clusterDictionary):
@@ -197,8 +195,6 @@ def keyShare(clusterDictionary):
 
     # NEED TO THREAD THE KEY SHARE TAKES WAY TOO LONG
 
-    print "Running hostPrep"
-    print "Creating Data Directories and Sharing gpadmin keys across Cluster for passwordless ssh"
     warnings.simplefilter("ignore")
     paramiko.util.log_to_file("/tmp/paramiko.log")
 
@@ -232,7 +228,6 @@ def keyShare(clusterDictionary):
                 ssh.close()
                 ssh.connect(node["externalIP"], 22, "root", password=str(os.environ.get("ROOT_PW")),
                             timeout=120)
-                print "     " + node["nodeName"] + ": Configuring Node"
                 (stdin, stdout, stderr) = ssh.exec_command("echo -e  'y\n'|ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''")
                 stderr.readlines()
                 stdout.readlines()
