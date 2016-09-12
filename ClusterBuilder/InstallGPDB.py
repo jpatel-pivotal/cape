@@ -64,7 +64,6 @@ def installGPDB(clusterDictionary,downloads):
 def setPaths(clusterNode):
 
 
-    print clusterNode["nodeName"] + ": Set Paths"
     connected = False
     attemptCount = 0
     while not connected:
@@ -98,7 +97,6 @@ def setPaths(clusterNode):
 
 
 def makeDirectories(clusterNode):
-    print clusterNode["nodeName"] + ": Making Data Directories"
     connected = False
     attemptCount = 0
     while not connected:
@@ -143,7 +141,6 @@ def makeDirectories(clusterNode):
 
 
 def uncompressFiles(clusterNode,downloads):
-    print clusterNode["nodeName"] + ": Installing GPDB on all nodes"
     connected = False
     attemptCount = 0
     while not connected:
@@ -181,8 +178,6 @@ def uncompressFiles(clusterNode,downloads):
 
 def prepFiles(clusterNode):
 
-
-    print clusterNode["nodeName"] + ": Prepping GPDB Software for install"
     connected = False
     attemptCount = 0
     while not connected:
@@ -222,7 +217,6 @@ def prepFiles(clusterNode):
 
 
 def installBits(clusterNode):
-    print clusterNode["nodeName"] + ": Installing GPDB"
     connected = False
     attemptCount = 0
     while not connected:
@@ -260,8 +254,7 @@ def installBits(clusterNode):
             ssh.close()
 
 def initDB(clusterNode,clusterName):
-    print clusterNode
-    print "INIT"
+
 
 # Read the template, modify it, write it to the cluster directory and the master
 
@@ -307,8 +300,6 @@ def initDB(clusterNode,clusterName):
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
             ssh.connect(clusterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
-            print "INIT:CONNECTION MADE"
-
             (stdin, stdout, stderr) = ssh.exec_command("source /usr/local/greenplum-db/greenplum_path.sh;gpinitsystem -c /tmp/gpinitsystem_config.cape -a")
             stdout.readlines()
             stderr.readlines()
