@@ -1,6 +1,7 @@
 kernel.shmmax = 500000000
 kernel.shmmni = 4096
 kernel.shmall = 4000000000
+
 kernel.sem = 250 512000 100 2048
 kernel.sysrq = 1
 kernel.core_uses_pid = 1
