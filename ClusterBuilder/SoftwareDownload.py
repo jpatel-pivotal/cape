@@ -4,10 +4,15 @@ import warnings
 import requests
 import json
 import time
-import os
+import os,pprint
+import threading
+
+####   LONG POLE IN THE TENT
+####   NEEDS TO BE THREADED LIKE OTHER MODULES
+####   THIS WILL REDUCE THE DOWNLOAD TIME TO X WHERE TODAY IT IS X*N (N IS NUMBER OF NODES)
+
 
 def downloadSoftware(clusterDictionary):
-    print clusterDictionary["clusterType"]
     warnings.simplefilter("ignore")
     package = clusterDictionary["clusterType"]
     headers = {"Authorization": "Token "+ os.environ.get("PIVNET_APIKEY")}
@@ -35,26 +40,11 @@ def downloadSoftware(clusterDictionary):
     response = requests.get(getURL,headers=headers)
     responseJSON = json.loads(response.text)
     downloads=[]
+    # ACCEPT EULA
 
-
-#HDB 2.0 Software
-#HDB 2.0 MADlib - Machine Learning
-#HDB 2.0 Language Extensions
-#JDBC/ODBC Drivers
-
-#4.3.8.1 Greenplum Database Sandbox Virtual Machines
-#Greenplum Command Center
-#Greenplum Support
-#Greenplum DataDirect ODBC and JDBC Drivers
-#4.3.5+ Partner Connector
-#4.3.5+ Analytics
-#4.3.5+ Encryption
-#4.3.6+ Language extensions
-#4.3.8.1 Loaders
-#4.3.8.1 Connectivity
-#4.3.8.1 Clients
-#4.3.8.1 Database Server
-
+    eulaURL = "https://network.pivotal.io/api/v2/products/" + package + "/releases/" + str(latestVersion["id"]) + "/eula_acceptance"
+    response = requests.post(eulaURL, headers=headers)
+    print "Software EULA Accepted:",response.text
 
     for fileInfo in responseJSON["file_groups"]:
         downloadFile={}
@@ -90,16 +80,13 @@ def downloadSoftware(clusterDictionary):
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloads.append(downloadFile)
-                        print str(file["aws_object_key"]).split("/")[2]
             elif "Language" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
-                    print file["name"]
                     downloadFile["URL"] = file["_links"]["download"].get("href")
                     downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                     downloads.append(downloadFile)
             elif "MADlib" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
-                    print file["name"]
                     if os.environ.get("MADLIB_VERSION") in file["name"]:
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
@@ -107,36 +94,51 @@ def downloadSoftware(clusterDictionary):
 
     if "pivotal-gpdb" in clusterDictionary["clusterType"]:
 
-        for node in clusterDictionary["clusterNodes"]:
-            print node["nodeName"] + ": Downloading Required Software from PIVNET"
-            connected = False
-            attemptCount = 0
-            while not connected:
-                try:
-                    attemptCount += 1
+        # threads = []
+        # for clusterNode in clusterDictionary["clusterNodes"]:
+        #     prepFilesThread = threading.Thread(target=prepFiles, args=(clusterNode,))
+        #     threads.append(prepFilesThread)
+        #     prepFilesThread.start()
+        # for x in threads:
+        #     x.join()
 
-                    ssh = paramiko.SSHClient()
-                    ssh.set_missing_host_key_policy(WarningPolicy())
-                    ssh.connect(node["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None, key_filename=os.environ.get("CONFIGS_PATH")+os.environ.get("SSH_KEY"),timeout=120)
+        # Thread PER HOST
 
-                    for file in downloads:
-                        print node["nodeName"]+": Downloading "+str(file['NAME'])
-                        (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token "+os.environ.get("PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL'])+" -O /tmp/"+str(file['NAME']))
+        threads = []
 
-                        stderr.readlines()
-                        stdout.readlines()
+        for clusterNode in clusterDictionary["clusterNodes"]:
+
+            hostDownloadsThread = threading.Thread(target=hostDownloads, args=(clusterNode,downloads,))
+            threads.append(hostDownloadsThread)
+            hostDownloadsThread.start()
+        for x in threads:
+            x.join()
 
 
-                    connected = True
-                except Exception as e:
-                    print e
-                    print node["nodeName"] + ": Attempting SSH Connection"
-                    time.sleep(3)
-                    if attemptCount > 1:
-                        print "Failing Process"
-                        exit()
-                finally:
-                    ssh.close()
+    # print node["nodeName"] + ": Downloading Required Software from PIVNET"
+            # connected = False
+            # attemptCount = 0
+            # while not connected:
+            #     try:
+            #         attemptCount += 1
+            #         ssh = paramiko.SSHClient()
+            #         ssh.set_missing_host_key_policy(WarningPolicy())
+            #         ssh.connect(node["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None, key_filename=str(os.environ.get("CONFIGS_PATH"))+str(os.environ.get("SSH_KEY")),timeout=120)
+            #         for file in downloads:
+            #             print node["nodeName"]+": Downloading "+str(file['NAME'])
+            #             (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token "+os.environ.get("PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL'])+" -O /tmp/"+str(file['NAME']))
+            #             stderr.readlines()
+            #             stdout.readlines()
+            #         connected = True
+            #     except Exception as e:
+            #         print e
+            #         print node["nodeName"] + ": Attempting SSH Connection"
+            #         time.sleep(3)
+            #         if attemptCount > 1:
+            #             print "Failing Process"
+            #             exit()
+            #     finally:
+            #         ssh.close()
 
     elif "pivotal-hdb" in clusterDictionary["clusterType"]:
         for node in clusterDictionary["clusterNodes"]:
@@ -151,7 +153,7 @@ def downloadSoftware(clusterDictionary):
                         ssh = paramiko.SSHClient()
                         ssh.set_missing_host_key_policy(WarningPolicy())
                         ssh.connect(node["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None,
-                                    key_filename=os.environ.get("CONFIGS_PATH") + os.environ.get("SSH_KEY"), timeout=120)
+                                    key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
 
                         for file in downloads:
                             print node["nodeName"] + ": Downloading " + str(file['NAME'])
@@ -172,4 +174,32 @@ def downloadSoftware(clusterDictionary):
                             exit()
                     finally:
                         ssh.close()
+    return downloads
 
+
+def hostDownloads(node,downloads):
+    connected = False
+    attemptCount = 0
+    while not connected:
+        try:
+            attemptCount += 1
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(WarningPolicy())
+            ssh.connect(node["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None,
+                        key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
+            for file in downloads:
+                print node["nodeName"] + ": Downloading " + str(file['NAME'])
+                (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ.get(
+                    "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
+                stderr.readlines()
+                stdout.readlines()
+            connected = True
+        except Exception as e:
+            print e
+            print node["nodeName"] + ": Attempting SSH Connection"
+            time.sleep(3)
+            if attemptCount > 1:
+                print "Failing Process"
+                exit()
+        finally:
+            ssh.close()
