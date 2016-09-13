@@ -39,10 +39,13 @@ def cliParse():
     args = parser.parse_args()
 
     clusterDictionary = {}
+
+
     if (args.subparser_name == "create"):
         clusterDictionary["clusterName"] = args.clustername
         clusterDictionary["nodeQty"] = args.nodes
         clusterDictionary["clusterType"] = "pivotal-" + args.type
+        clusterDictionary["segmentDBs"] = os.environ.get("SEGMENTDBS")
         if (args.type == "vanilla"):
             ClusterBuilder.buildServers(clusterDictionary)
         elif (args.type == "gpdb"):

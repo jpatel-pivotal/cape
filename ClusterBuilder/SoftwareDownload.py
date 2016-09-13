@@ -187,7 +187,7 @@ def hostDownloads(node,downloads):
                         key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
             for file in downloads:
                 if "master1" in node["role"]:
-                    print "Downloading " + str(file['NAME']) + "to all Cluster Nodes"
+                    print "Downloading " + str(file['NAME']) + " to all Cluster Nodes"
 
                 (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ.get(
                     "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
