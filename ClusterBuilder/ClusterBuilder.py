@@ -49,6 +49,7 @@ def buildServers(clusterDictionary):
     print clusterDictionary["clusterName"] + ": Cluster Nodes Created in Google Cloud"
     print clusterDictionary["clusterName"] + ": Cluster Configuration Started"
 
+
     #THREAD THIS
     threads=[]
     for nodeCnt in range(int(clusterDictionary["nodeQty"])):
@@ -61,6 +62,7 @@ def buildServers(clusterDictionary):
         clusterNode["nodeName"] = nodeName
         clusterNode["dataVolume"] = str(volume)
 
+
         node = driver.ex_get_node(nodeName)
         driver.attach_volume(node, volume, device=None, ex_mode=None, ex_boot=False, ex_type=None, ex_source=None,
                              ex_auto_delete=True, ex_initialize_params=None, ex_licenses=None, ex_interface=None)
@@ -69,7 +71,6 @@ def buildServers(clusterDictionary):
 
         clusterNode["externalIP"] = str(node).split(",")[3].split("'")[1]
         clusterNode["internalIP"] = str(node).split(",")[4].split("'")[1]
-        print "     " + nodeName + ": Server Prep Phase Started"
         print "     " + nodeName + ": External IP: " + clusterNode["externalIP"]
         print "     " + nodeName + ": Internal IP: " + clusterNode["internalIP"]
         prepThread = threading.Thread(target=prepServer, args=(clusterNode,nodeCnt))
@@ -149,7 +150,6 @@ def prepServer(clusterNode,nodeCnt):
                 exit()
         finally:
             ssh.close()
-    print "     " +nodeName + ": Server Prep Phase Completed"
     return
 
 
