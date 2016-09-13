@@ -143,7 +143,6 @@ def downloadSoftware(clusterDictionary):
     elif "pivotal-hdb" in clusterDictionary["clusterType"]:
         for node in clusterDictionary["clusterNodes"]:
             if "access" in node["role"]:
-                print node["nodeName"] + ": Downloading Required Software from PIVNET to Management Server"
                 connected = False
                 attemptCount = 0
                 while not connected:
@@ -156,7 +155,6 @@ def downloadSoftware(clusterDictionary):
                                     key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
 
                         for file in downloads:
-                            print node["nodeName"] + ": Downloading " + str(file['NAME'])
                             (stdin, stdout, stderr) = ssh.exec_command(
                                 "wget --header=\"Authorization: Token " + os.environ.get("PIVNET_APIKEY") + "\" --post-data='' " + str(
                                     file['URL']) + " -O /tmp/" + str(file['NAME']))
@@ -188,7 +186,9 @@ def hostDownloads(node,downloads):
             ssh.connect(node["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None,
                         key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
             for file in downloads:
-                print node["nodeName"] + ": Downloading " + str(file['NAME'])
+                if attemptCount==1:
+                    print "Downloading " + str(file['NAME']) + "to all Cluster Nodes"
+
                 (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ.get(
                     "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
                 stderr.readlines()

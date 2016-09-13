@@ -154,12 +154,10 @@ def uncompressFiles(clusterNode,downloads):
 
             for file in downloads:
                 if ".zip" in file["NAME"]:
-                    print clusterNode["nodeName"] + ": Uncompressing " + file["NAME"]
                     (stdin, stdout, stderr) = ssh.exec_command("cd /tmp;unzip ./"+file["NAME"])
                     stdout.readlines()
                     stderr.readlines()
                 elif ".gz" in file["NAME"]:
-                    print clusterNode["nodeName"] + ": Untarring and Uncompressing " + file["NAME"]
                     (stdin, stdout, stderr) = ssh.exec_command("cd /tmp;tar xvfz ./" + file["NAME"])
                     stdout.readlines()
                     stderr.readlines()
