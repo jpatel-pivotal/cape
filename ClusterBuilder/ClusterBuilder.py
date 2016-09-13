@@ -28,9 +28,18 @@ def buildServers(clusterDictionary):
 
 
     clusterNodes=[]
+
+############################################################
+### THIS SHOULD BE THE ONLY CHANGE FOR AZURE FOR COMPUTE ###
+############################################################
+
+
     ComputeEngine = get_driver(Provider.GCE)
+    #ComputeEngine = get_driver(Provider.AZURE)
 
     driver = ComputeEngine(os.environ.get("SVC_ACCOUNT"),str(os.environ.get("CONFIGS_PATH"))+str(os.environ.get("SVC_ACCOUNT_KEY")),project=str(os.environ.get("PROJECT")), datacenter=str(os.environ.get("ZONE")))
+    #driver = ComputeEngine(subscription_id=' ',key_file=' ')
+
     sa_scopes = [{'scopes': ['compute', 'storage-full']}]
     print clusterDictionary["clusterName"] + ": Creating "+ str(clusterDictionary["nodeQty"]) + " Nodes"
     nodes = driver.ex_create_multiple_nodes(clusterDictionary["clusterName"], os.environ.get("SERVER_TYPE"), os.environ.get("IMAGE"),
@@ -67,8 +76,7 @@ def buildServers(clusterDictionary):
         driver.attach_volume(node, volume, device=None, ex_mode=None, ex_boot=False, ex_type=None, ex_source=None,
                              ex_auto_delete=True, ex_initialize_params=None, ex_licenses=None, ex_interface=None)
 
-
-
+############################################################
         clusterNode["externalIP"] = str(node).split(",")[3].split("'")[1]
         clusterNode["internalIP"] = str(node).split(",")[4].split("'")[1]
         print "     " + nodeName + ": External IP: " + clusterNode["externalIP"]

@@ -58,34 +58,35 @@ def installGPDB(clusterDictionary,downloads):
 
 
     initDB(masterNode,clusterDictionary["clusterName"])
+    #modifyPGHBA(masterNode)
     verifyInstall(masterNode,clusterDictionary)
 
-def modifyPGHBA(masterNode):
-    # Append the local ip of ths host running this tool to pg_hba.conf
-    #ipaddress.
-    ipAddress = socket.gethostbyname(socket.gethostname())
-    connected = False
-    attemptCount = 0
-
-    while not connected:
-        try:
-            attemptCount += 1
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
-            print "echo 'host  all gpadmin '+str(ipAddress)+'/32   trust' > $MASTER_DATA_DIRECTORY/pg_hba.conf"
-            (stdin, stdout, stderr) = ssh.exec_command("echo 'host  all gpadmin '+str(ipAddress)+'/32   trust' > $MASTER_DATA_DIRECTORY/pg_hba.conf")
-            stdout.readlines()
-            stderr.readlines()
-            connected = True
-        except Exception as e:
-            print masterNode["nodeName"] + ": Attempting SSH Connection"
-            time.sleep(3)
-            if attemptCount > 1:
-                print "Failing Process"
-                exit()
-        finally:
-            ssh.close()
+# def modifyPGHBA(masterNode):
+#     # Append the local ip of ths host running this tool to pg_hba.conf
+#     #ipaddress.
+#     ipAddress = socket.gethostbyname(socket.gethostname())
+#     connected = False
+#     attemptCount = 0
+#
+#     while not connected:
+#         try:
+#             attemptCount += 1
+#             ssh = paramiko.SSHClient()
+#             ssh.set_missing_host_key_policy(WarningPolicy())
+#             ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
+#             print "echo 'host  all gpadmin '+str(ipAddress)+'/32   trust' > $MASTER_DATA_DIRECTORY/pg_hba.conf"
+#             (stdin, stdout, stderr) = ssh.exec_command("echo 'host  all gpadmin "+str(ipAddress)+"/32   trust' >> $MASTER_DATA_DIRECTORY/pg_hba.conf")
+#             print stdout.readlines()
+#             print stderr.readlines()
+#             connected = True
+#         except Exception as e:
+#             print masterNode["nodeName"] + ": Attempting SSH Connection"
+#             time.sleep(3)
+#             if attemptCount > 1:
+#                 print "Failing Process"
+#                 exit()
+#         finally:
+#             ssh.close()
 
 
 
@@ -94,7 +95,7 @@ def verifyInstall(masterNode,clusterDictionary):
     numberSegments = int(clusterDictionary["nodeQty"]) - 3
     totalSegmentDBs = numberSegments * int(clusterDictionary["segmentDBs"])
     # This should login to master and run some checks.
-    dbURI = queries.uri(masterNode["externalIP"], port=5432, dbname="template0", user="gpadmin", password=str(os.environ.get("GPADMIN_PW")))
+    #dbURI = queries.uri(masterNode["externalIP"], port=5432, dbname="template0", user="gpadmin", password=str(os.environ.get("GPADMIN_PW")))
     # Might need to wait on GPDB to come up
     connected = False
     attemptCount = 0
@@ -102,19 +103,55 @@ def verifyInstall(masterNode,clusterDictionary):
     while not connected:
         try:
             attemptCount += 1
-            with queries.Session(dbURI) as session:
-                # Check Up segmentDB's vs number there should be.
-                connected = True
-                upSegments = session.query("SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'u';")
-                print "upSegments:",upSegments
-                downSegments = session.query("SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'd';")
-                print "downSegments:",downSegments
-                totalSegments =  session.query("SELECT count(*) FROM gp_segment_configuration WHERE content >= 0;")
-                print "totalSegments:",totalSegments
-                primarySegments = session.query("SELECT count(*) FROM gp_segment_configuration WHERE content >= 0; and role='p';")
-                print "primarySegments:",primarySegments
-                mirrorSegments = session.query("SELECT count(*) FROM gp_segment_configuration WHERE content >= 0; and role='m';")
-                print "mirrorSegments:",mirrorSegments
+
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(WarningPolicy())
+
+            ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
+
+            (stdin, stdout, stderr) = ssh.exec_command("psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'u';\"")
+            upSegments = int((stdout.readlines())[2])
+            stderr.readlines()
+
+            (stdin, stdout, stderr) = ssh.exec_command("psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'd';\"")
+            downSegments = int((stdout.readlines())[2])
+            stderr.readlines()
+
+            (stdin, stdout, stderr) = ssh.exec_command("psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0;\"")
+            segments = int(stdout.readlines()[2])
+            stderr.readlines()
+
+            (stdin, stdout, stderr) = ssh.exec_command("psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and role='p';\"")
+            primarySegments = int(stdout.readlines()[2])
+            stderr.readlines()
+
+            (stdin, stdout, stderr) = ssh.exec_command("psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and role='m';\"")
+
+            mirrorSegments = int(stdout.readlines()[2])
+            stderr.readlines()
+
+            connected = True
+
+            if ((totalSegmentDBs *2)==upSegments) and (totalSegmentDBs==primarySegments) and (totalSegmentDBs==mirrorSegments):
+                print "All Database Segments are online and Database is performing properly."
+            else:
+                print "Something went wrong with the Database initialization, please verify"
+
+
+
+            # with queries.Session(dbURI) as session:
+            #     # Check Up segmentDB's vs number there should be.
+            #     connected = True
+            #     upSegments = session.query("SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'u';")
+            #     print "upSegments:",upSegments
+            #     downSegments = session.query("SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'd';")
+            #     print "downSegments:",downSegments
+            #     totalSegments =  session.query("SELECT count(*) FROM gp_segment_configuration WHERE content >= 0;")
+            #     print "totalSegments:",totalSegments
+            #     primarySegments = session.query("SELECT count(*) FROM gp_segment_configuration WHERE content >= 0; and role='p';")
+            #     print "primarySegments:",primarySegments
+            #     mirrorSegments = session.query("SELECT count(*) FROM gp_segment_configuration WHERE content >= 0; and role='m';")
+            #     print "mirrorSegments:",mirrorSegments
         except Exception as e:
             print e
             print masterNode["nodeName"] + ": Waiting on Database Connection"
