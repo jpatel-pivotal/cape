@@ -8,10 +8,11 @@ import os
 import threading
 import queries
 import socket
+from LabBuilder import AccessHostPrepare
 
 
 def installGPDB(clusterDictionary,downloads):
-
+    print clusterDictionary["clusterName"] +  ":Installing Greenplum Database on Cluster"
     threads =[]
     masterNode = {}
     for clusterNode in clusterDictionary["clusterNodes"]:
@@ -55,38 +56,56 @@ def installGPDB(clusterDictionary,downloads):
     for x in threads:
         x.join()
 
-
-
+    print clusterDictionary["clusterName"] + ":Database Installation Complete"
+    print clusterDictionary["clusterName"] + ":Initializing Greenplum Database"
     initDB(masterNode,clusterDictionary["clusterName"])
-    #modifyPGHBA(masterNode)
+    print clusterDictionary["clusterName"] + ":Database Initialization Complete"
     verifyInstall(masterNode,clusterDictionary)
+    print clusterDictionary["clusterName"] + ":Installing Machine Learning Capabilities"
+    installComponents(masterNode,downloads)
+    print clusterDictionary["clusterName"] + ":Machine Learning Install Complete"
 
-# def modifyPGHBA(masterNode):
-#     # Append the local ip of ths host running this tool to pg_hba.conf
-#     #ipaddress.
-#     ipAddress = socket.gethostbyname(socket.gethostname())
-#     connected = False
-#     attemptCount = 0
-#
-#     while not connected:
-#         try:
-#             attemptCount += 1
-#             ssh = paramiko.SSHClient()
-#             ssh.set_missing_host_key_policy(WarningPolicy())
-#             ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
-#             print "echo 'host  all gpadmin '+str(ipAddress)+'/32   trust' > $MASTER_DATA_DIRECTORY/pg_hba.conf"
-#             (stdin, stdout, stderr) = ssh.exec_command("echo 'host  all gpadmin "+str(ipAddress)+"/32   trust' >> $MASTER_DATA_DIRECTORY/pg_hba.conf")
-#             print stdout.readlines()
-#             print stderr.readlines()
-#             connected = True
-#         except Exception as e:
-#             print masterNode["nodeName"] + ": Attempting SSH Connection"
-#             time.sleep(3)
-#             if attemptCount > 1:
-#                 print "Failing Process"
-#                 exit()
-#         finally:
-#             ssh.close()
+    AccessHostPrepare.installComponents(clusterDictionary)
+
+def installComponents(masterNode,downloads):
+
+    connected = False
+    attemptCount = 0
+
+    while not connected:
+        try:
+            attemptCount += 1
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(WarningPolicy())
+
+            ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
+            (stdin, stdout, stderr) = ssh.exec_command("createlang plpythonu -d template1")
+            stdout.readlines()
+            stderr.readlines()
+            (stdin, stdout, stderr) = ssh.exec_command("createlang plpythonu -d gpadmin")
+            stdout.readlines()
+            stderr.readlines()
+            (stdin, stdout, stderr) = ssh.exec_command("gppkg -i /tmp/madlib*.gppkg")
+            stdout.readlines()
+            stderr.readlines()
+            ssh.exec_command("$GPHOME/madlib/bin/madpack install -s madlib -p greenplum -c gpadmin@" + masterNode["nodeName"] + "/template1 > /tmp/mad1.txt")
+            stdout.readlines()
+            stderr.readlines()
+            ssh.exec_command("$GPHOME/madlib/bin/madpack install -s madlib -p greenplum -c gpadmin@" + masterNode["nodeName"] + "/gpadmin > /tmp/mad2.txt")
+            stdout.readlines()
+            stderr.readlines()
+
+
+
+            connected = True
+
+        except Exception as e:
+            print e
+            print masterNode["nodeName"] + ": Waiting on Database Connection"
+            time.sleep(3)
+            if attemptCount > 10:
+                print "Failing Process: Please Verify Database Manually."
+                exit()
 
 
 
@@ -133,25 +152,10 @@ def verifyInstall(masterNode,clusterDictionary):
             connected = True
 
             if ((totalSegmentDBs *2)==upSegments) and (totalSegmentDBs==primarySegments) and (totalSegmentDBs==mirrorSegments):
-                print "All Database Segments are online and Database is performing properly."
+                print clusterDictionary["clusterName"] + ": Greenplum Database Initialization Verified"
             else:
-                print "Something went wrong with the Database initialization, please verify"
+                print clusterDictionary["clusterName"] + ": Something went wrong with the Database initialization, please verify manually"
 
-
-
-            # with queries.Session(dbURI) as session:
-            #     # Check Up segmentDB's vs number there should be.
-            #     connected = True
-            #     upSegments = session.query("SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'u';")
-            #     print "upSegments:",upSegments
-            #     downSegments = session.query("SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'd';")
-            #     print "downSegments:",downSegments
-            #     totalSegments =  session.query("SELECT count(*) FROM gp_segment_configuration WHERE content >= 0;")
-            #     print "totalSegments:",totalSegments
-            #     primarySegments = session.query("SELECT count(*) FROM gp_segment_configuration WHERE content >= 0; and role='p';")
-            #     print "primarySegments:",primarySegments
-            #     mirrorSegments = session.query("SELECT count(*) FROM gp_segment_configuration WHERE content >= 0; and role='m';")
-            #     print "mirrorSegments:",mirrorSegments
         except Exception as e:
             print e
             print masterNode["nodeName"] + ": Waiting on Database Connection"

@@ -115,30 +115,6 @@ def downloadSoftware(clusterDictionary):
             x.join()
 
 
-    # print node["nodeName"] + ": Downloading Required Software from PIVNET"
-            # connected = False
-            # attemptCount = 0
-            # while not connected:
-            #     try:
-            #         attemptCount += 1
-            #         ssh = paramiko.SSHClient()
-            #         ssh.set_missing_host_key_policy(WarningPolicy())
-            #         ssh.connect(node["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None, key_filename=str(os.environ.get("CONFIGS_PATH"))+str(os.environ.get("SSH_KEY")),timeout=120)
-            #         for file in downloads:
-            #             print node["nodeName"]+": Downloading "+str(file['NAME'])
-            #             (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token "+os.environ.get("PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL'])+" -O /tmp/"+str(file['NAME']))
-            #             stderr.readlines()
-            #             stdout.readlines()
-            #         connected = True
-            #     except Exception as e:
-            #         print e
-            #         print node["nodeName"] + ": Attempting SSH Connection"
-            #         time.sleep(3)
-            #         if attemptCount > 1:
-            #             print "Failing Process"
-            #             exit()
-            #     finally:
-            #         ssh.close()
 
     elif "pivotal-hdb" in clusterDictionary["clusterType"]:
         for node in clusterDictionary["clusterNodes"]:
