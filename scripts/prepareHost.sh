@@ -48,9 +48,13 @@ networkSetup(){
 
 installSoftware(){
     echo "Install Required Software"
-    sudo yum -y install httpd java-1.8.0-openjdk java-1.8.0-openjdk-devel epel-release git python-argparse
-    sudo yum -y python-pip
+    sudo yum -y install httpd java-1.8.0-openjdk java-1.8.0-openjdk-devel epel-release git python-argparse gcc gcc-c++
+    sudo yum -y install python27 python27-python-devel python27-python-pip python27-python-setuptools python27-python-tools python27-python-virtualenv
+    sudo yum -y install python-pip python-devel lapack-devel
+
+    sudo pip install pip -U
     sudo pip install sh
+    sudo pip install setuptools -U
 
 }
 
@@ -61,36 +65,6 @@ serverSetup(){
 
 
 }
-
-
-
-
-
-
-
-#installGPDBbins(){
-#    wget https://storage.googleapis.com/pivedu-bins/$GPZIP
-#    unzip $GPZIP
-#    GPBIN="${GPZIP%.*}.bin"
-#    sed -i 's/more <</cat <</g' ./$GPBIN
-#    sed -i 's/agreed=/agreed=1/' ./$GPBIN
-#    sed -i 's/pathVerification=/pathVerification=1/' ./$GPBIN
-#    sed -i '/defaultInstallPath=/a installPath=${defaultInstallPath}' ./$GPBIN
-#    sudo ./$GPBIN
-#    sudo chown -R gpadmin: /usr/local/greenplum-db*
-#
-#}
-
-#downloadExtensions(){
-#    wget https://storage.googleapis.com/pivedu-bins/$MADLIB -O /tmp/$MADLIB
-#    wget https://storage.googleapis.com/pivedu-bins/$PLR -O /tmp/$PLR
-#
-#    cd /tmp;tar xvfz /tmp/$MADLIB
-#    sudo chown -R gpadmin: *.gppkg
-#
-#
-#
-#}
 
 
 
