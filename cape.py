@@ -8,6 +8,8 @@ from LabBuilder import StudentAccounts
 from os.path import join, dirname
 from dotenv import load_dotenv
 from ClusterBuilder import InstallGPDB
+import time
+import datetime
 
 
 def cliParse():
@@ -49,7 +51,7 @@ def cliParse():
         if (args.type == "vanilla"):
             ClusterBuilder.buildServers(clusterDictionary)
         elif (args.type == "gpdb"):
-            print "GPDB Builder"
+            print clusterDictionary["clusterName"] + ": Creating a Greenplum Database Cluster"
             ClusterBuilder.buildServers(clusterDictionary)
             downloads = SoftwareDownload.downloadSoftware(clusterDictionary)
             InstallGPDB.installGPDB(clusterDictionary,downloads)
@@ -97,8 +99,13 @@ def cliParse():
 
 
 if __name__ == '__main__':
+    startTime = datetime.datetime.today()
+    print  "Start Time: ",startTime
     dotenv_path = "./configs/config.env"
     load_dotenv(dotenv_path)
     os.environ["CAPE_HOME"]=os.getcwd()
     os.environ["CONFIGS_PATH"]=os.getcwd()+"/configs/"
     cliParse()
+    stopTime = datetime.datetime.today()
+    print  "Completion Time: ",stopTime
+    print  "Elapsed Time for Cluster Creation: ",stopTime - startTime
