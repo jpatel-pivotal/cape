@@ -6,9 +6,7 @@ import warnings
 import os
 import threading
 import time,pprint
-from googleapiclient import discovery
-from oauth2client.client import GoogleCredentials
-import json
+
 
 def buildServers(clusterDictionary):
     warnings.simplefilter("ignore")
@@ -74,6 +72,9 @@ def buildServers(clusterDictionary):
 
 
 
+        #### THIS SECTION CAN BE MODIFIED TO TAKE A VARIABLE AND MOUNT MULTIPLE DISKS INSTEAD OF 1
+        ####  MOUNTS SHOULD GO UNDER /DATA AND BE DATA1,DATA2,DATAN
+        ####  THIS MEANS THE 1 DISK USE CASE SHOULD BE MOUNTED THE SAME WAY.
 
 
         volume = driver.create_volume(os.environ.get("DISK_SIZE"), nodeName + "-data-disk", None, None,

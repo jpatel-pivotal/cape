@@ -46,6 +46,13 @@ def downloadSoftware(clusterDictionary):
     response = requests.post(eulaURL, headers=headers)
     print "Software EULA Accepted:",response.text
 
+### SHOULD ADD A FLAG TO TELL WHICH HOSTS THE SW GOES ON
+#   0 : CLUSTERWIDE
+#   1 : ACCESS
+#   2 : MASTERS
+#   3 : DATANODES OR SEGMENT DB HOST
+
+    print clusterDictionary["clusterName"]+": Downloading Software to Cluster Nodes"
     for fileInfo in responseJSON["file_groups"]:
         downloadFile={}
         if "pivotal-gpdb" in clusterDictionary["clusterType"]:
@@ -54,30 +61,36 @@ def downloadSoftware(clusterDictionary):
                     if "Red Hat Enterprise Linux 5, 6" in file["name"]:
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
+                        downloadFile["TARGET"] = 0
+
                         downloads.append(downloadFile)
             elif "Loader" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     if "Red Hat Enterprise Linux x86_64" in file["name"]:
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
+                        downloadFile["TARGET"] = 0
                         downloads.append(downloadFile)
             elif "Analytics" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
-                    if os.environ.get("MADLIB_VERSION") in file["name"]:
+                    if os.environ.get("MADLIB_VERSION") in file["name"]:    #NEED TO FIX THIS TO BE AUTOMATIC
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
+                        downloadFile["TARGET"] = 2
                         downloads.append(downloadFile)
             elif "Language extensions" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     if "PL/R Extension for RHEL" in file["name"]:
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
+                        downloadFile["TARGET"] = 2
                         downloads.append(downloadFile)
-            elif "Language extensions" in fileInfo["name"]:
+            elif "Clients" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     if "Clients for Red Hat Enterprise Linux x86_64" in file["name"]:
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
+                        downloadFile["TARGET"] = 1
                         downloads.append(downloadFile)
         elif "pivotal-hdb" in clusterDictionary["clusterType"]:
             if "Software" in fileInfo["name"]:
@@ -156,6 +169,11 @@ def downloadSoftware(clusterDictionary):
                         ssh.close()
     return downloads
 
+### SHOULD ADD A FLAG TO TELL WHICH HOSTS THE SW GOES ON
+#   0 : CLUSTERWIDE
+#   1 : ACCESS
+#   2 : MASTERS
+#   3 : DATANODES OR SEGMENT DB HOST
 
 def hostDownloads(node,downloads):
     connected = False
@@ -168,13 +186,30 @@ def hostDownloads(node,downloads):
             ssh.connect(node["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None,
                         key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
             for file in downloads:
-                if "master1" in node["role"]:
-                    print "Downloading " + str(file['NAME']) + " to all Cluster Nodes"
+                if (file["TARGET"] == 2) and ("master" in node["role"]):
+                    (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ.get(
+                        "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
+                    stderr.readlines()
+                    stdout.readlines()
+                elif (file["TARGET"] == 1) and ("access" in node["role"]):
 
-                (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ.get(
-                    "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
-                stderr.readlines()
-                stdout.readlines()
+                    (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ.get(
+                        "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
+                    stderr.readlines()
+                    stdout.readlines()
+                elif (file["TARGET"] == 3) and ("worker" in node["role"]):
+
+                    (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ.get(
+                        "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
+                    stderr.readlines()
+                    stdout.readlines()
+                elif (file["TARGET"] == 0) and ("access" not in node["role"]):
+                    (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ.get(
+                        "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
+                    stderr.readlines()
+                    stdout.readlines()
+
+
             connected = True
         except Exception as e:
             print e

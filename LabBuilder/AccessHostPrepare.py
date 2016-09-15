@@ -16,6 +16,8 @@ def installComponents(clusterDictionary):
     for clusterNode in clusterDictionary["clusterNodes"]:
         if  "access" in  clusterNode["role"]:
             accessNode = clusterNode
+        elif "master1" in clusterNode["role"]:
+            masterNode = clusterNode
 
     connected = False
     attemptCount = 0
@@ -33,7 +35,6 @@ def installComponents(clusterDictionary):
             (stdin, stdout, stderr) = ssh.exec_command("sudo useradd -s /bin/bash -c 'Instructor Account' -m instructor")
             stderr.readlines()
             stdout.readlines()
-            print "sudo echo " + str(os.environ.get("INSTRUCTOR_PW")) + " | sudo passwd --stdin instructor"
             (stdin, stdout, stderr) = ssh.exec_command( "sudo echo " + str(os.environ.get("INSTRUCTOR_PW")) + " | sudo passwd --stdin instructor")
             stdout.readlines()
             stderr.readlines()
@@ -41,6 +42,9 @@ def installComponents(clusterDictionary):
             stderr.readlines()
             stdout.readlines()
             (stdin, stdout, stderr) = ssh.exec_command("sudo echo 'source /opt/rh/python27/enable' >> ~/.bashrc;sudo cp ~/.bashrc /root/.bashrc;sudo cp ~/.bashrc /home/instructor/.bashrc")
+            stderr.readlines()
+            stdout.readlines()
+            (stdin, stdout, stderr) = ssh.exec_command("sudo echo 'export PGHOST="+masterNode["externalIP"]+"' >> ~/.bashrc;sudo cp ~/.bashrc /root/.bashrc;sudo cp ~/.bashrc /home/instructor/.bashrc")
             stderr.readlines()
             stdout.readlines()
             (stdin, stdout, stderr) = ssh.exec_command("sudo -i pip install pip -U")
