@@ -5,8 +5,10 @@ from paramiko import WarningPolicy
 import warnings
 import os
 import threading
-import shutil
-import time
+import time,pprint
+from googleapiclient import discovery
+from oauth2client.client import GoogleCredentials
+import json
 
 def buildServers(clusterDictionary):
     warnings.simplefilter("ignore")
@@ -29,31 +31,36 @@ def buildServers(clusterDictionary):
 
     clusterNodes=[]
 
-############################################################
-### THIS SHOULD BE THE ONLY CHANGE FOR AZURE FOR COMPUTE ###
-############################################################
-
 
     ComputeEngine = get_driver(Provider.GCE)
-    #ComputeEngine = get_driver(Provider.AZURE)
 
     driver = ComputeEngine(os.environ.get("SVC_ACCOUNT"),str(os.environ.get("CONFIGS_PATH"))+str(os.environ.get("SVC_ACCOUNT_KEY")),project=str(os.environ.get("PROJECT")), datacenter=str(os.environ.get("ZONE")))
-    #driver = ComputeEngine(subscription_id=' ',key_file=' ')
+    gce_disk_struct = [
+        {
+            "kind": "compute#attachedDisk",
+            "boot": True,
+            "autoDelete": True,
 
+            'initializeParams': {
+                "sourceImage": "/projects/centos-cloud/global/images/" + str(os.environ.get("IMAGE")),
+                "diskSizeGb": 40,
+                "diskStorageType": str(os.environ.get("DISK_TYPE")),
+                "diskType": "/compute/v1/projects/" + str(os.environ.get("PROJECT")) + "/zones/" + str(
+                    os.environ.get("ZONE")) + "/diskTypes/" + str(os.environ.get("DISK_TYPE"))
+            },
+        }
+
+    ]
     sa_scopes = [{'scopes': ['compute', 'storage-full']}]
-    print clusterDictionary["clusterName"] + ": Creating "+ str(clusterDictionary["nodeQty"]) + " Nodes"
-    nodes = driver.ex_create_multiple_nodes(clusterDictionary["clusterName"], os.environ.get("SERVER_TYPE"), os.environ.get("IMAGE"),
-                                            int(clusterDictionary["nodeQty"]), os.environ.get("ZONE"),
+    print clusterDictionary["clusterName"] + ": Creating " + str(clusterDictionary["nodeQty"]) + " Nodes"
+    nodes =   driver.ex_create_multiple_nodes(base_name=clusterDictionary["clusterName"], size=str(os.environ.get("SERVER_TYPE")), image=None,
+                                            number=int(clusterDictionary["nodeQty"]), location=str(os.environ.get("ZONE")),
                                             ex_network='default', ex_tags=None, ex_metadata=None, ignore_errors=True,
-                                            use_existing_disk=True, poll_interval=2, external_ip='ephemeral',
-                                            ex_disk_type='pd-standard', ex_disk_auto_delete=True,
-                                            ex_service_accounts=None,
-                                            timeout=180, description=None, ex_can_ip_forward=None,
-                                            ex_disks_gce_struct=None,
+                                            use_existing_disk=False, poll_interval=2, external_ip='ephemeral',
+                                            ex_service_accounts=None, timeout=180, description=None,
+                                            ex_can_ip_forward=None, ex_disks_gce_struct=gce_disk_struct,
                                             ex_nic_gce_struct=None, ex_on_host_maintenance=None,
                                             ex_automatic_restart=None)
-
-
 
     print clusterDictionary["clusterName"] + ": Cluster Nodes Created in Google Cloud"
     print clusterDictionary["clusterName"] + ": Cluster Configuration Started"
@@ -65,6 +72,10 @@ def buildServers(clusterDictionary):
         nodeName = clusterDictionary["clusterName"] + "-" + str(nodeCnt).zfill(3)
         clusterNode = {}
 
+
+
+
+
         volume = driver.create_volume(os.environ.get("DISK_SIZE"), nodeName + "-data-disk", None, None,
                                       None, False, "pd-standard")
 
@@ -75,8 +86,6 @@ def buildServers(clusterDictionary):
         node = driver.ex_get_node(nodeName)
         driver.attach_volume(node, volume, device=None, ex_mode=None, ex_boot=False, ex_type=None, ex_source=None,
                              ex_auto_delete=True, ex_initialize_params=None, ex_licenses=None, ex_interface=None)
-
-############################################################
         clusterNode["externalIP"] = str(node).split(",")[3].split("'")[1]
         clusterNode["internalIP"] = str(node).split(",")[4].split("'")[1]
         print "     " + nodeName + ": External IP: " + clusterNode["externalIP"]
@@ -145,6 +154,8 @@ def prepServer(clusterNode,nodeCnt):
             (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir /data")
             stdout.readlines()
             stderr.readlines()
+
+            # could change to node.reboot
             (stdin, stdout, stderr) = ssh.exec_command("sudo reboot")
             stdout.readlines()
             stderr.readlines()
