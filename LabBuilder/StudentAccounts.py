@@ -1,12 +1,9 @@
-from libcloud.compute.providers import get_driver
-from libcloud.compute.types import Provider
+import os
+import time
+import warnings
+
 import paramiko
 from paramiko import WarningPolicy
-
-import warnings
-import time
-import os
-import threading
 
 
 def add(clusterDictionary):
@@ -28,17 +25,17 @@ def add(clusterDictionary):
                 (stdin, stdout, stderr) = ssh.exec_command("mkdir -p /data/home")
                 stderr.readlines()
                 stdout.readlines()
-                for student in range(1,int(os.environ.get("NUM_STUDENTS"))+1):
+                for student in range(1, int(os.environ.get("NUM_STUDENTS")) + 1):
                     studnum = str(student)
-                    print "Creating Student Account:"+str(student)
+                    print "Creating Student Account:" + str(student)
 
-                    (stdin, stdout, stderr) = ssh.exec_command("useradd -s /bin/bash -u "+str(5000+student)+ " -c 'Student Account " + studnum + "' --base-dir /data/home -m student"+studnum)
+                    (stdin, stdout, stderr) = ssh.exec_command("useradd -s /bin/bash -u " + str(
+                        5000 + student) + " -c 'Student Account " + studnum + "' --base-dir /data/home -m student" + studnum)
                     stderr.readlines()
                     stdout.readlines()
-                    ssh.exec_command("echo '\\timing on' >> /data/home/student"+studnum+"/.psqlrc")
+                    ssh.exec_command("echo '\\timing on' >> /data/home/student" + studnum + "/.psqlrc")
                     stderr.readlines()
                     stdout.readlines()
-
 
                 connected = True
             except Exception as e:
