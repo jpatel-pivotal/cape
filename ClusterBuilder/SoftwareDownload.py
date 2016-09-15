@@ -73,6 +73,12 @@ def downloadSoftware(clusterDictionary):
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloads.append(downloadFile)
+            elif "Language extensions" in fileInfo["name"]:
+                for file in fileInfo["product_files"]:
+                    if "Clients for Red Hat Enterprise Linux x86_64" in file["name"]:
+                        downloadFile["URL"] = file["_links"]["download"].get("href")
+                        downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
+                        downloads.append(downloadFile)
         elif "pivotal-hdb" in clusterDictionary["clusterType"]:
             if "Software" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
