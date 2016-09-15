@@ -64,8 +64,15 @@ def installGPDB(clusterDictionary,downloads):
     print clusterDictionary["clusterName"] + ":Installing Machine Learning Capabilities"
     installComponents(masterNode,downloads)
     print clusterDictionary["clusterName"] + ":Machine Learning Install Complete"
+    print clusterDictionary["clusterName"] + ":Preparing Access Host "
 
+
+#NEED TO MAKE OPTIONAL
     AccessHostPrepare.installComponents(clusterDictionary)
+
+
+    print clusterDictionary["clusterName"] + ":Access Host Install Complete"
+
 
 def installComponents(masterNode,downloads):
 
@@ -194,7 +201,8 @@ def setPaths(clusterNode):
         finally:
             ssh.close()
 
-
+def cleanUp(clusterDictionary):
+    print "cleanUp"
 
 
 
