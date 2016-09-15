@@ -1,21 +1,17 @@
-import paramiko
-from paramiko import WarningPolicy
-import warnings
-import requests
 import json
-import time
-import os,pprint
+import os
 import threading
+import time
+import warnings
 
-####   LONG POLE IN THE TENT
-####   NEEDS TO BE THREADED LIKE OTHER MODULES
-####   THIS WILL REDUCE THE DOWNLOAD TIME TO X WHERE TODAY IT IS X*N (N IS NUMBER OF NODES)
-
+import paramiko
+import requests
+from paramiko import WarningPolicy
 
 def downloadSoftware(clusterDictionary):
     warnings.simplefilter("ignore")
     package = clusterDictionary["clusterType"]
-    headers = {"Authorization": "Token "+ os.environ.get("PIVNET_APIKEY")}
+    headers = {"Authorization": "Token " + os.environ.get("PIVNET_APIKEY")}
 
     # FIND PRODUCT
     response = requests.get("https://network.pivotal.io/api/v2/products")
@@ -27,34 +23,35 @@ def downloadSoftware(clusterDictionary):
     response = requests.get(releasesURL)
     res = json.loads(response.text)
     # GET LATEST RELEASE
-    latest=0
+    latest = 0
     for versions in res["releases"]:
-        versionInt =  int(str(versions["version"]).replace(".",""))
+        versionInt = int(str(versions["version"]).replace(".", ""))
         if (versionInt > latest):
-            latest=versionInt;
+            latest = versionInt;
             latestVersion = versions
 
             # # GET DOWNLOAD URL AND FILENAME
 
-    getURL = "https://network.pivotal.io/api/v2/products/"+package+"/releases/"+str(latestVersion["id"])
-    response = requests.get(getURL,headers=headers)
+    getURL = "https://network.pivotal.io/api/v2/products/" + package + "/releases/" + str(latestVersion["id"])
+    response = requests.get(getURL, headers=headers)
     responseJSON = json.loads(response.text)
-    downloads=[]
+    downloads = []
     # ACCEPT EULA
 
-    eulaURL = "https://network.pivotal.io/api/v2/products/" + package + "/releases/" + str(latestVersion["id"]) + "/eula_acceptance"
+    eulaURL = "https://network.pivotal.io/api/v2/products/" + package + "/releases/" + str(
+        latestVersion["id"]) + "/eula_acceptance"
     response = requests.post(eulaURL, headers=headers)
-    print "Software EULA Accepted:",response.text
+    print "Software EULA Accepted:", response.text
 
-### SHOULD ADD A FLAG TO TELL WHICH HOSTS THE SW GOES ON
-#   0 : CLUSTERWIDE
-#   1 : ACCESS
-#   2 : MASTERS
-#   3 : DATANODES OR SEGMENT DB HOST
+    ### SHOULD ADD A FLAG TO TELL WHICH HOSTS THE SW GOES ON
+    #   0 : CLUSTERWIDE
+    #   1 : ACCESS
+    #   2 : MASTERS
+    #   3 : DATANODES OR SEGMENT DB HOST
 
-    print clusterDictionary["clusterName"]+": Downloading Software to Cluster Nodes"
+    print clusterDictionary["clusterName"] + ": Downloading Software to Cluster Nodes"
     for fileInfo in responseJSON["file_groups"]:
-        downloadFile={}
+        downloadFile = {}
         if "pivotal-gpdb" in clusterDictionary["clusterType"]:
             if "Database Server" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
@@ -73,7 +70,7 @@ def downloadSoftware(clusterDictionary):
                         downloads.append(downloadFile)
             elif "Analytics" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
-                    if os.environ.get("MADLIB_VERSION") in file["name"]:    #NEED TO FIX THIS TO BE AUTOMATIC
+                    if os.environ.get("MADLIB_VERSION") in file["name"]:  # NEED TO FIX THIS TO BE AUTOMATIC
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloadFile["TARGET"] = 2
@@ -126,8 +123,7 @@ def downloadSoftware(clusterDictionary):
         threads = []
 
         for clusterNode in clusterDictionary["clusterNodes"]:
-
-            hostDownloadsThread = threading.Thread(target=hostDownloads, args=(clusterNode,downloads,))
+            hostDownloadsThread = threading.Thread(target=hostDownloads, args=(clusterNode, downloads,))
             threads.append(hostDownloadsThread)
             hostDownloadsThread.start()
         for x in threads:
@@ -147,11 +143,13 @@ def downloadSoftware(clusterDictionary):
                         ssh = paramiko.SSHClient()
                         ssh.set_missing_host_key_policy(WarningPolicy())
                         ssh.connect(node["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None,
-                                    key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
+                                    key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")),
+                                    timeout=120)
 
                         for file in downloads:
                             (stdin, stdout, stderr) = ssh.exec_command(
-                                "wget --header=\"Authorization: Token " + os.environ.get("PIVNET_APIKEY") + "\" --post-data='' " + str(
+                                "wget --header=\"Authorization: Token " + os.environ.get(
+                                    "PIVNET_APIKEY") + "\" --post-data='' " + str(
                                     file['URL']) + " -O /tmp/" + str(file['NAME']))
 
                             stderr.readlines()
@@ -169,13 +167,14 @@ def downloadSoftware(clusterDictionary):
                         ssh.close()
     return downloads
 
+
 ### SHOULD ADD A FLAG TO TELL WHICH HOSTS THE SW GOES ON
 #   0 : CLUSTERWIDE
 #   1 : ACCESS
 #   2 : MASTERS
 #   3 : DATANODES OR SEGMENT DB HOST
 
-def hostDownloads(node,downloads):
+def hostDownloads(node, downloads):
     connected = False
     attemptCount = 0
     while not connected:
@@ -203,12 +202,11 @@ def hostDownloads(node,downloads):
                         "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
                     stderr.readlines()
                     stdout.readlines()
-                elif (file["TARGET"] == 0):   #  and ("access" not in node["role"]):  Decided to put GPDB on ACCESS
+                elif (file["TARGET"] == 0):  # and ("access" not in node["role"]):  Decided to put GPDB on ACCESS
                     (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ.get(
                         "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
                     stderr.readlines()
                     stdout.readlines()
-
 
             connected = True
         except Exception as e:

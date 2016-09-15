@@ -1,24 +1,23 @@
-from libcloud.compute.providers import get_driver
-from libcloud.compute.types import Provider
-import paramiko
-from paramiko import WarningPolicy
-import warnings
 import os
 import threading
-import time,pprint
+import time
+import warnings
+
+import paramiko
+from libcloud.compute.providers import get_driver
+from libcloud.compute.types import Provider
+from paramiko import WarningPolicy
 
 
 def buildServers(clusterDictionary):
     warnings.simplefilter("ignore")
     print clusterDictionary["clusterName"] + ": Cluster Creation Started"
 
-
-
-# ADD ACTUAL CHECKING FOR EXISTING CLUSTER....THIS WAS JUST FOR TEST
+    # ADD ACTUAL CHECKING FOR EXISTING CLUSTER....THIS WAS JUST FOR TEST
 
     try:
         if not os.path.exists(clusterDictionary["clusterName"]):
-            os.makedirs("./clusterConfigs/"+clusterDictionary["clusterName"])
+            os.makedirs("./clusterConfigs/" + clusterDictionary["clusterName"])
 
     except OSError:
         if "test" in clusterDictionary["clusterName"]:
@@ -30,13 +29,13 @@ def buildServers(clusterDictionary):
             print "Cluster Name already exists."
     clusterPath = "./clusterConfigs/" + clusterDictionary["clusterName"]
 
-
-    clusterNodes=[]
-
+    clusterNodes = []
 
     ComputeEngine = get_driver(Provider.GCE)
 
-    driver = ComputeEngine(os.environ.get("SVC_ACCOUNT"),str(os.environ.get("CONFIGS_PATH"))+str(os.environ.get("SVC_ACCOUNT_KEY")),project=str(os.environ.get("PROJECT")), datacenter=str(os.environ.get("ZONE")))
+    driver = ComputeEngine(os.environ.get("SVC_ACCOUNT"),
+                           str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SVC_ACCOUNT_KEY")),
+                           project=str(os.environ.get("PROJECT")), datacenter=str(os.environ.get("ZONE")))
     gce_disk_struct = [
         {
             "kind": "compute#attachedDisk",
@@ -55,8 +54,10 @@ def buildServers(clusterDictionary):
     ]
     sa_scopes = [{'scopes': ['compute', 'storage-full']}]
     print clusterDictionary["clusterName"] + ": Creating " + str(clusterDictionary["nodeQty"]) + " Nodes"
-    nodes =   driver.ex_create_multiple_nodes(base_name=clusterDictionary["clusterName"], size=str(os.environ.get("SERVER_TYPE")), image=None,
-                                            number=int(clusterDictionary["nodeQty"]), location=str(os.environ.get("ZONE")),
+    nodes = driver.ex_create_multiple_nodes(base_name=clusterDictionary["clusterName"],
+                                            size=str(os.environ.get("SERVER_TYPE")), image=None,
+                                            number=int(clusterDictionary["nodeQty"]),
+                                            location=str(os.environ.get("ZONE")),
                                             ex_network='default', ex_tags=None, ex_metadata=None, ignore_errors=True,
                                             use_existing_disk=False, poll_interval=2, external_ip='ephemeral',
                                             ex_service_accounts=None, timeout=180, description=None,
@@ -67,14 +68,11 @@ def buildServers(clusterDictionary):
     print clusterDictionary["clusterName"] + ": Cluster Nodes Created in Google Cloud"
     print clusterDictionary["clusterName"] + ": Cluster Configuration Started"
 
-
-    #THREAD THIS
-    threads=[]
+    # THREAD THIS
+    threads = []
     for nodeCnt in range(int(clusterDictionary["nodeQty"])):
         nodeName = clusterDictionary["clusterName"] + "-" + str(nodeCnt).zfill(3)
         clusterNode = {}
-
-
 
         #### THIS SECTION CAN BE MODIFIED TO TAKE A VARIABLE AND MOUNT MULTIPLE DISKS INSTEAD OF 1
         ####  MOUNTS SHOULD GO UNDER /DATA AND BE DATA1,DATA2,DATAN
@@ -87,7 +85,6 @@ def buildServers(clusterDictionary):
         clusterNode["nodeName"] = nodeName
         clusterNode["dataVolume"] = str(volume)
 
-
         node = driver.ex_get_node(nodeName)
         driver.attach_volume(node, volume, device=None, ex_mode=None, ex_boot=False, ex_type=None, ex_source=None,
                              ex_auto_delete=True, ex_initialize_params=None, ex_licenses=None, ex_interface=None)
@@ -95,24 +92,22 @@ def buildServers(clusterDictionary):
         clusterNode["internalIP"] = str(node).split(",")[4].split("'")[1]
         print "     " + nodeName + ": External IP: " + clusterNode["externalIP"]
         print "     " + nodeName + ": Internal IP: " + clusterNode["internalIP"]
-        prepThread = threading.Thread(target=prepServer, args=(clusterNode,nodeCnt))
+        prepThread = threading.Thread(target=prepServer, args=(clusterNode, nodeCnt))
         clusterNodes.append(clusterNode)
         threads.append(prepThread)
         prepThread.start()
     for x in threads:
         x.join()
     print clusterDictionary["clusterName"] + ": Cluster Configuration Complete"
-    clusterDictionary["clusterNodes"]=clusterNodes
+    clusterDictionary["clusterNodes"] = clusterNodes
     hostsFiles(clusterDictionary)
     keyShare(clusterDictionary)
 
 
-
-def prepServer(clusterNode,nodeCnt):
+def prepServer(clusterNode, nodeCnt):
     warnings.simplefilter("ignore")
     paramiko.util.log_to_file("/tmp/paramiko.log")
     nodeName = clusterNode["nodeName"]
-
 
     # Set Server Role
 
@@ -131,24 +126,23 @@ def prepServer(clusterNode,nodeCnt):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None, key_filename=str(os.environ.get("CONFIGS_PATH"))+str(os.environ.get("SSH_KEY")),timeout=120)
+            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None,
+                        key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
             sftp = ssh.open_sftp()
-            sftp.put('./configs/sysctl.conf.cape', '/tmp/sysctl.conf.cape',confirm=True)
-            sftp.put('./configs/fstab.cape', '/tmp/fstab.cape',confirm=True)
-            sftp.put('./configs/limits.conf.cape', '/tmp/limits.conf.cape',confirm=True)
-            sftp.put('./scripts/prepareHost.sh', '/tmp/prepareHost.sh',confirm=True)
+            sftp.put('./configs/sysctl.conf.cape', '/tmp/sysctl.conf.cape', confirm=True)
+            sftp.put('./configs/fstab.cape', '/tmp/fstab.cape', confirm=True)
+            sftp.put('./configs/limits.conf.cape', '/tmp/limits.conf.cape', confirm=True)
+            sftp.put('./scripts/prepareHost.sh', '/tmp/prepareHost.sh', confirm=True)
 
             time.sleep(10)
-
-
 
             gpadminPW = os.environ.get("GPADMIN_PW")
             rootPW = os.environ.get("ROOT_PW")
 
-            (stdin, stdout, stderr) = ssh.exec_command("sudo echo "+ gpadminPW + " | sudo passwd --stdin gpadmin")
+            (stdin, stdout, stderr) = ssh.exec_command("sudo echo " + gpadminPW + " | sudo passwd --stdin gpadmin")
             stdout.readlines()
             stderr.readlines()
-            (stdin, stdout, stderr) = ssh.exec_command("sudo echo "+ rootPW + " | sudo passwd --stdin root")
+            (stdin, stdout, stderr) = ssh.exec_command("sudo echo " + rootPW + " | sudo passwd --stdin root")
             stdout.readlines()
             stderr.readlines()
 
@@ -166,7 +160,7 @@ def prepServer(clusterNode,nodeCnt):
             stderr.readlines()
             connected = True
         except Exception as e:
-            print "     " +nodeName + ": Attempting SSH Connection"
+            print "     " + nodeName + ": Attempting SSH Connection"
             time.sleep(3)
 
             if attemptCount > 40:
@@ -177,19 +171,18 @@ def prepServer(clusterNode,nodeCnt):
     return
 
 
-
 def hostsFiles(clusterDictionary):
     clusterPath = "./clusterConfigs/" + clusterDictionary["clusterName"]
     os.chdir(clusterPath)
-    with open ("hosts","w") as hostsFile:
+    with open("hosts", "w") as hostsFile:
         hostsFile.write("######  CAPE ENTRIES #######\n")
         for node in clusterDictionary["clusterNodes"]:
-            hostsFile.write(node["internalIP"]+"  "+node["nodeName"]+"\n")
+            hostsFile.write(node["internalIP"] + "  " + node["nodeName"] + "\n")
 
-    with open ("workers","w") as workersFile:
+    with open("workers", "w") as workersFile:
         with open("allhosts", "w") as allhostsFile:
             for node in clusterDictionary["clusterNodes"]:
-                if "master1" in node["role"] :
+                if "master1" in node["role"]:
                     allhostsFile.write(node["nodeName"] + "\n")
                 elif "master2" in node["role"]:
                     allhostsFile.write(node["nodeName"] + "\n")
@@ -214,17 +207,13 @@ def verifyCluster(clusterDictionary):
     # check df -k for Data Drive
 
 
-
 def keyShare(clusterDictionary):
-
     # NEED TO THREAD THE KEY SHARE TAKES WAY TOO LONG
 
     warnings.simplefilter("ignore")
     paramiko.util.log_to_file("/tmp/paramiko.log")
 
-
-
-    #client.connect(clusterNode["externalIP"], 22, SSH_USERNAME, None, pkey=None, key_filename=SSH_KEY_PATH, timeout=120)
+    # client.connect(clusterNode["externalIP"], 22, SSH_USERNAME, None, pkey=None, key_filename=SSH_KEY_PATH, timeout=120)
 
     for node in clusterDictionary["clusterNodes"]:
 
@@ -239,7 +228,8 @@ def keyShare(clusterDictionary):
                 (stdin, stdout, stderr) = ssh.exec_command("echo -e  'y\n'|ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''")
                 stderr.readlines()
                 stdout.readlines()
-                (stdin, stdout, stderr) = ssh.exec_command("sudo rm -f /etc/yum.repos.d/CentOS-SCL*;sudo yum clean all;sudo yum install -y epel-release;sudo yum install -y sshpass git")
+                (stdin, stdout, stderr) = ssh.exec_command(
+                    "sudo rm -f /etc/yum.repos.d/CentOS-SCL*;sudo yum clean all;sudo yum install -y epel-release;sudo yum install -y sshpass git")
                 stderr.readlines()
                 stdout.readlines()
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
@@ -275,7 +265,6 @@ def keyShare(clusterDictionary):
                 ssh.close()
 
 
-
 def hostFileUpload(clusterNode):
     warnings.simplefilter("ignore")
     paramiko.util.log_to_file("/tmp/paramiko.log")
@@ -288,24 +277,21 @@ def hostFileUpload(clusterNode):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None,pkey=None, key_filename=str(os.environ.get("CONFIGS_PATH"))+str(os.environ.get("SSH_KEY")), timeout=120)
-
-
+            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None,
+                        key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
 
             sftp = ssh.open_sftp()
             sftp.put("hosts", "/tmp/hosts")
             sftp.put("allhosts", "/tmp/allhosts")
             sftp.put("workers", "/tmp/workers")
-            (stdin, stdout, stderr)=ssh.exec_command("sudo sh -c 'cat /tmp/hosts >> /etc/hosts'")
+            (stdin, stdout, stderr) = ssh.exec_command("sudo sh -c 'cat /tmp/hosts >> /etc/hosts'")
             connected = True
         except Exception as e:
-            #print e
-            print "     " + clusterNode["nodeName"]+": Attempting SSH Connection"
+            # print e
+            print "     " + clusterNode["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 40:
                 print "Failing Process"
                 exit()
         finally:
             ssh.close()
-
-
