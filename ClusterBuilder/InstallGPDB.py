@@ -18,6 +18,8 @@ def installGPDB(clusterDictionary,downloads):
     for clusterNode in clusterDictionary["clusterNodes"]:
         if  "master1" in  clusterNode["role"]:
             masterNode = clusterNode
+        elif "access" in  clusterNode["role"]:
+            accessNode = clusterNode
         uncompressFilesThread = threading.Thread(target=uncompressFiles, args=(clusterNode,downloads))
         threads.append(uncompressFilesThread)
         uncompressFilesThread.start()
@@ -72,6 +74,7 @@ def installGPDB(clusterDictionary,downloads):
 
 
     print clusterDictionary["clusterName"] + ":Access Host Install Complete"
+    modifyPHGBA(masterNode,accessNode)
 
 
 def installComponents(masterNode,downloads):
@@ -245,8 +248,32 @@ def makeDirectories(clusterNode):
             ssh.close()
 
 
+def modifyPHGBA(masterNode,accessNode):
+    connected = False
+    attemptCount = 0
 
+    while not connected:
+        try:
+            attemptCount += 1
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(WarningPolicy())
+            ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
+            (stdin, stdout, stderr) = ssh.exec_command("echo 'host all all "+accessNode['internalIP']+ "/0 md5' >> /data/master/gpseg-1/pg_hba.conf")
+            stdout.readlines()
+            stderr.readlines()
 
+            (stdin, stdout, stderr) = ssh.exec_command("gpstop -a -r")
+            stdout.readlines()
+            stderr.readlines()
+            connected = True
+        except Exception as e:
+            print masterNode["nodeName"] + ": Attempting SSH Connection"
+            time.sleep(3)
+            if attemptCount > 1:
+                print "Failing Process"
+                exit()
+        finally:
+            ssh.close()
 
 
 
