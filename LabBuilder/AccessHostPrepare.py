@@ -41,9 +41,19 @@ def installComponents(clusterDictionary):
             (stdin, stdout, stderr) = ssh.exec_command("sudo chown -R instructor: /home/instructor")
             stderr.readlines()
             stdout.readlines()
-            (stdin, stdout, stderr) = ssh.exec_command("sudo cp /home/gpadmin/.bashrc ~/.bashrc")
+
+
+            ### ADD GP VARIABLES ###
+
+            (stdin, stdout, stderr) = ssh.exec_command("sudo echo 'export GPHOME=/usr/local/greenplum-db' >> ~/.bashrc")
             stderr.readlines()
             stdout.readlines()
+            (stdin, stdout, stderr) = ssh.exec_command("sudo echo 'export PATH=$GPHOME/bin:$PATH' >> ~/.bashrc")
+            stderr.readlines()
+            stdout.readlines()
+
+            ########################
+
             (stdin, stdout, stderr) = ssh.exec_command("sudo echo 'source /opt/rh/python27/enable' >> ~/.bashrc")
             stderr.readlines()
             stdout.readlines()

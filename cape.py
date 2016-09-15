@@ -25,7 +25,10 @@ def cliParse():
     parser_create.add_argument("--type", dest='type', action="store",help="Type of cluster to be create (gpdb/hdb/vanilla",required=True)
     parser_create.add_argument("--name", dest='clustername', action="store",help="Name of Cluster to be Created",required=True)
     parser_create.add_argument("--nodes", dest='nodes', default=1, action="store", help="Number of Nodes to be Created",required=True)
+
     parser_create.add_argument("-v", dest='verbose', action='store_true',required=False)
+    parser_create.add_argument("-l", dest='verbose', action='store_true',required=False,help="Include Lab creation in Cluster Buildout")
+
 
     parser_stage.add_argument("--name", dest='clustername', action="store",help="Name of Cluster to be Staged",required=True)
     parser_query.add_argument("--name", dest='clustername', action="store",help="Name of Cluster to be Staged",required=True)
