@@ -51,6 +51,9 @@ def installComponents(clusterDictionary):
             (stdin, stdout, stderr) = ssh.exec_command("sudo echo 'export PATH=$GPHOME/bin:$PATH' >> ~/.bashrc")
             stderr.readlines()
             stdout.readlines()
+            (stdin, stdout, stderr) = ssh.exec_command("sudo echo 'export LD_LIBRARY_PATH=$GPHOME/lib:$LD_LIBRARY_PATH' >> ~/.bashrc")
+            stderr.readlines()
+            stdout.readlines()
 
             ########################
 
@@ -66,19 +69,19 @@ def installComponents(clusterDictionary):
             (stdin, stdout, stderr) = ssh.exec_command("sudo -i pip install setuptools -U")
             stderr.readlines()
             stdout.readlines()
-            (stdin, stdout, stderr) = ssh.exec_command("sudo -i pip install numpy -U")
+            (stdin, stdout, stderr) = ssh.exec_command("sudo -i pip install numpy -U >> python-tools.log")
             stderr.readlines()
             stdout.readlines()
             #(stdin, stdout, stderr) = ssh.exec_command("pip install scipy -U >> /tmp/scipyinstall.out")
             #stderr.readlines()
             #stdout.readlines()
-            (stdin, stdout, stderr) = ssh.exec_command("sudo -i pip install scikit-learn -U")
+            (stdin, stdout, stderr) = ssh.exec_command("sudo -i pip install scikit-learn -U >> python-tools.log ")
             stderr.readlines()
             stdout.readlines()
-            (stdin, stdout, stderr) = ssh.exec_command("sudo -i pip install nltk -U ;sudo -i python -m nltk.downloader all")
+            (stdin, stdout, stderr) = ssh.exec_command("sudo -i pip install nltk -U >> python-tools.log ;sudo -i python -m nltk.downloader all >> python-tools.log")
             stderr.readlines()
             stdout.readlines()
-            (stdin, stdout, stderr) = ssh.exec_command("sudo -i pip install gensim -U ")
+            (stdin, stdout, stderr) = ssh.exec_command("sudo -i pip install gensim -U >> python-tools.log")
             stderr.readlines()
             stdout.readlines()
 

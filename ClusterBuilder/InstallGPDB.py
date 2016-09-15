@@ -71,11 +71,8 @@ def installGPDB(clusterDictionary,downloads):
 
 #NEED TO MAKE OPTIONAL
     AccessHostPrepare.installComponents(clusterDictionary)
-
-
     modifyPHGBA(masterNode,accessNode)
     setGPADMINPW(masterNode)
-
     print clusterDictionary["clusterName"] + ": Access Host Install Complete"
 
 
@@ -259,7 +256,9 @@ def setGPADMINPW(masterNode):
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
             ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
-            (stdin, stdout, stderr) = ssh.exec_command("alter user gpadmin with password '"+str(os.environ.get("GPADMIN_PW"))+ "';")
+            (stdin, stdout, stderr) = ssh.exec_command("psql -c \"alter user gpadmin with password '"+str(os.environ.get("GPADMIN_PW"))+ "';\"")
+
+            #(stdin, stdout, stderr) = ssh.exec_command("alter user gpadmin with password '"+str(os.environ.get("GPADMIN_PW"))+ "';")
             stdout.readlines()
             stderr.readlines()
             connected = True
