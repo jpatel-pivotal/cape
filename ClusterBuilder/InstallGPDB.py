@@ -12,7 +12,7 @@ from LabBuilder import AccessHostPrepare
 
 
 def installGPDB(clusterDictionary,downloads):
-    print clusterDictionary["clusterName"] +  ":Installing Greenplum Database on Cluster"
+    print clusterDictionary["clusterName"] +  ": Installing Greenplum Database on Cluster"
     threads =[]
     masterNode = {}
     for clusterNode in clusterDictionary["clusterNodes"]:
@@ -58,23 +58,25 @@ def installGPDB(clusterDictionary,downloads):
     for x in threads:
         x.join()
 
-    print clusterDictionary["clusterName"] + ":Database Installation Complete"
-    print clusterDictionary["clusterName"] + ":Initializing Greenplum Database"
+    print clusterDictionary["clusterName"] + ": Database Installation Complete"
+    print clusterDictionary["clusterName"] + ": Initializing Greenplum Database"
     initDB(masterNode,clusterDictionary["clusterName"])
-    print clusterDictionary["clusterName"] + ":Database Initialization Complete"
+    print clusterDictionary["clusterName"] + ": Database Initialization Complete"
     verifyInstall(masterNode,clusterDictionary)
-    print clusterDictionary["clusterName"] + ":Installing Machine Learning Capabilities"
+    print clusterDictionary["clusterName"] + ": Installing Machine Learning Capabilities"
     installComponents(masterNode,downloads)
-    print clusterDictionary["clusterName"] + ":Machine Learning Install Complete"
-    print clusterDictionary["clusterName"] + ":Preparing Access Host "
+    print clusterDictionary["clusterName"] + ": Machine Learning Install Complete"
+    print clusterDictionary["clusterName"] + ": Preparing Access Host "
 
 
 #NEED TO MAKE OPTIONAL
     AccessHostPrepare.installComponents(clusterDictionary)
 
 
-    print clusterDictionary["clusterName"] + ":Access Host Install Complete"
     modifyPHGBA(masterNode,accessNode)
+    setGPADMINPW(masterNode)
+
+    print clusterDictionary["clusterName"] + ": Access Host Install Complete"
 
 
 def installComponents(masterNode,downloads):
@@ -98,10 +100,10 @@ def installComponents(masterNode,downloads):
             (stdin, stdout, stderr) = ssh.exec_command("gppkg -i /tmp/madlib*.gppkg")
             stdout.readlines()
             stderr.readlines()
-            ssh.exec_command("$GPHOME/madlib/bin/madpack install -s madlib -p greenplum -c gpadmin@" + masterNode["nodeName"] + "/template1 > /tmp/mad1.txt")
+            ssh.exec_command("$GPHOME/madlib/bin/madpack install -s madlib -p greenplum -c gpadmin@" + masterNode["nodeName"] + "/template1")
             stdout.readlines()
             stderr.readlines()
-            ssh.exec_command("$GPHOME/madlib/bin/madpack install -s madlib -p greenplum -c gpadmin@" + masterNode["nodeName"] + "/gpadmin > /tmp/mad2.txt")
+            ssh.exec_command("$GPHOME/madlib/bin/madpack install -s madlib -p greenplum -c gpadmin@" + masterNode["nodeName"] + "/gpadmin")
             stdout.readlines()
             stderr.readlines()
 
@@ -248,6 +250,28 @@ def makeDirectories(clusterNode):
             ssh.close()
 
 
+def setGPADMINPW(masterNode):
+    connected = False
+    attemptCount = 0
+    while not connected:
+        try:
+            attemptCount += 1
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(WarningPolicy())
+            ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
+            (stdin, stdout, stderr) = ssh.exec_command("alter user gpadmin with password '"+str(os.environ.get("GPADMIN_PW"))+ "';")
+            stdout.readlines()
+            stderr.readlines()
+            connected = True
+        except Exception as e:
+            print masterNode["nodeName"] + ": Attempting SSH Connection"
+            time.sleep(3)
+            if attemptCount > 1:
+                print "Failing Process"
+                exit()
+        finally:
+            ssh.close()
+
 def modifyPHGBA(masterNode,accessNode):
     connected = False
     attemptCount = 0
@@ -258,7 +282,7 @@ def modifyPHGBA(masterNode,accessNode):
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
             ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
-            (stdin, stdout, stderr) = ssh.exec_command("echo 'host all all "+accessNode['internalIP']+ "/0 md5' >> /data/master/gpseg-1/pg_hba.conf")
+            (stdin, stdout, stderr) = ssh.exec_command("echo 'host all gpadmin "+accessNode['internalIP']+ "/0 md5' >> /data/master/gpseg-1/pg_hba.conf")
             stdout.readlines()
             stderr.readlines()
 
@@ -449,4 +473,3 @@ def initDB(clusterNode,clusterName):
         finally:
             ssh.close()
 
-    print "Greenplum Database Install Complete."

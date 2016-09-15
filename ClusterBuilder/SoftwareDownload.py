@@ -203,7 +203,7 @@ def hostDownloads(node,downloads):
                         "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
                     stderr.readlines()
                     stdout.readlines()
-                elif (file["TARGET"] == 0) and ("access" not in node["role"]):
+                elif (file["TARGET"] == 0):   #  and ("access" not in node["role"]):  Decided to put GPDB on ACCESS
                     (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ.get(
                         "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
                     stderr.readlines()
