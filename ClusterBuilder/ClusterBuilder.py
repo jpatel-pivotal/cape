@@ -15,7 +15,7 @@ def buildServers(clusterDictionary):
 
 
 # ADD ACTUAL CHECKING FOR EXISTING CLUSTER....THIS WAS JUST FOR TEST
-    
+
     try:
         if not os.path.exists(clusterDictionary["clusterName"]):
             os.makedirs("./clusterConfigs/"+clusterDictionary["clusterName"])
