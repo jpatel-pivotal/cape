@@ -55,6 +55,9 @@ def installGPDB(clusterDictionary, downloads):
     for x in threads:
         x.join()
 
+
+
+
     print clusterDictionary["clusterName"] + ": Database Installation Complete"
     print clusterDictionary["clusterName"] + ": Initializing Greenplum Database"
     initDB(masterNode, clusterDictionary["clusterName"])
@@ -66,6 +69,13 @@ def installGPDB(clusterDictionary, downloads):
     print clusterDictionary["clusterName"] + ": Preparing Access Host "
 
     # NEED TO MAKE OPTIONAL
+    threads = []
+    for clusterNode in clusterDictionary["clusterNodes"]:
+        installDSPackagesThread = threading.Thread(target=installDSPackages, args=(clusterNode,))
+        threads.append(installDSPackagesThread)
+        installDSPackagesThread.start()
+    for x in threads:
+        x.join()
     AccessHostPrepare.installComponents(clusterDictionary)
     modifyPHGBA(masterNode, accessNode)
     setGPADMINPW(masterNode)
@@ -173,6 +183,71 @@ def verifyInstall(masterNode, clusterDictionary):
                 print "Failing Process: Please Verify Database Manually."
                 exit()
 
+####  WOULD RATHER THIS GO IN ACCESS HOST PREPARE AND THEN RENAME IT TO ENABLEDATASCIENCE
+#####
+
+def installDSPackages(clusterNode):
+    connected = False
+    attemptCount = 0
+    while not connected:
+        try:
+            attemptCount += 1
+
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(WarningPolicy())
+
+            ssh.connect(clusterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
+
+            # FIX FOR GENSIM
+            (stdin, stdout, stderr) = ssh.exec_command("echo -e 'import sys\nsys.setdefaultencoding(\"utf-8\")' >> /usr/local/greenplum-db-4.3.9.1/ext/python/lib/python2.6/site-packages/sitecustomize.py")
+            print stdout.readlines()
+            print stderr.readlines()
+
+            # INSTALL PIP FOR GP-PYTHON
+            (stdin, stdout, stderr) = ssh.exec_command("wget https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py;python /tmp/get-pip.py --no-cache-dir")
+            print stdout.readlines()
+            print stderr.readlines()
+
+            # INSTALL NUMPY
+            (stdin, stdout, stderr) = ssh.exec_command("pip install numpy==1.9.3 -U --no-cache-dir")
+            print stdout.readlines()
+            print stderr.readlines()
+
+            # INSTALL SCIPY
+            (stdin, stdout, stderr) = ssh.exec_command("export CXX=/usr/bin/g++;pip install scipy==0.18.0 -U --no-cache-dir")
+            print stdout.readlines()
+            print stderr.readlines()
+
+            # INSTALL SCIKIT-LEARN
+            (stdin, stdout, stderr) = ssh.exec_command("pip install scikit-learn==0.17.1 -U --no-cache-dir")
+            print stdout.readlines()
+            print stderr.readlines()
+
+            # INSTALL nltk
+            (stdin, stdout, stderr) = ssh.exec_command("pip install nltk==3.1 -U --no-cache-dir")
+            print stdout.readlines()
+            print stderr.readlines()
+
+            # INSTALL GENSIM
+            (stdin, stdout, stderr) = ssh.exec_command("cp /usr/lib64/python2.6/lib-dynload/bz2.so /usr/local/greenplum-db-4.3.9.1/ext/python/lib/python2.6/lib-dynload/bz2.so")
+            print stdout.readlines()
+            print stderr.readlines()
+
+            (stdin, stdout, stderr) = ssh.exec_command("pip install gensim -U --no-cache-dir --no-dependencies")
+            print stdout.readlines()
+            print stderr.readlines()
+
+
+            connected = True
+        except Exception as e:
+            print clusterNode["nodeName"] + ": Attempting SSH Connection"
+            time.sleep(3)
+            if attemptCount > 1:
+                print "Failing Process"
+                exit()
+        finally:
+            ssh.close()
+###
 
 def setPaths(clusterNode):
     connected = False
