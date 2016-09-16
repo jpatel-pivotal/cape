@@ -4,7 +4,7 @@
 
 * Automated cluster buildout for Google Compute. 
     * Support for Greenplum Database
-    * Support for Pivotal HDB Planned
+    * Support for Pivotal HDB (Planned)
     
 Requirements:
    * Tested against Python 2.7.12
