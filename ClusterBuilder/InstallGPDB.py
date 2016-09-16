@@ -200,42 +200,42 @@ def installDSPackages(clusterNode):
 
             # FIX FOR GENSIM
             (stdin, stdout, stderr) = ssh.exec_command("echo -e 'import sys\nsys.setdefaultencoding(\"utf-8\")' >> /usr/local/greenplum-db-4.3.9.1/ext/python/lib/python2.6/site-packages/sitecustomize.py")
-            print stdout.readlines()
-            print stderr.readlines()
+            stdout.readlines()
+            stderr.readlines()
 
             # INSTALL PIP FOR GP-PYTHON
             (stdin, stdout, stderr) = ssh.exec_command("wget https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py;python /tmp/get-pip.py --no-cache-dir")
-            print stdout.readlines()
-            print stderr.readlines()
+            stdout.readlines()
+            stderr.readlines()
 
             # INSTALL NUMPY
             (stdin, stdout, stderr) = ssh.exec_command("pip install numpy==1.9.3 -U --no-cache-dir")
-            print stdout.readlines()
-            print stderr.readlines()
+            stdout.readlines()
+            stderr.readlines()
 
             # INSTALL SCIPY
             (stdin, stdout, stderr) = ssh.exec_command("export CXX=/usr/bin/g++;pip install scipy==0.18.0 -U --no-cache-dir")
-            print stdout.readlines()
-            print stderr.readlines()
+            stdout.readlines()
+            stderr.readlines()
 
             # INSTALL SCIKIT-LEARN
             (stdin, stdout, stderr) = ssh.exec_command("pip install scikit-learn==0.17.1 -U --no-cache-dir")
-            print stdout.readlines()
-            print stderr.readlines()
+            stdout.readlines()
+            stderr.readlines()
 
             # INSTALL nltk
             (stdin, stdout, stderr) = ssh.exec_command("pip install nltk==3.1 -U --no-cache-dir")
-            print stdout.readlines()
-            print stderr.readlines()
+            stdout.readlines()
+            stderr.readlines()
 
             # INSTALL GENSIM
             (stdin, stdout, stderr) = ssh.exec_command("cp /usr/lib64/python2.6/lib-dynload/bz2.so /usr/local/greenplum-db-4.3.9.1/ext/python/lib/python2.6/lib-dynload/bz2.so")
-            print stdout.readlines()
-            print stderr.readlines()
+            stdout.readlines()
+            stderr.readlines()
 
             (stdin, stdout, stderr) = ssh.exec_command("pip install gensim -U --no-cache-dir --no-dependencies")
-            print stdout.readlines()
-            print stderr.readlines()
+            stdout.readlines()
+            stderr.readlines()
 
 
             connected = True
