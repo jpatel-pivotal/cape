@@ -51,6 +51,8 @@ installSoftware(){
     sudo yum -y install httpd java-1.8.0-openjdk java-1.8.0-openjdk-devel epel-release git python-argparse gcc gcc-c++
     sudo yum -y install python27 python27-python-devel python27-python-pip python27-python-setuptools python27-python-tools python27-python-virtualenv
     sudo yum -y install python-pip python-devel lapack-devel
+    sudo yum -y install sshpass git
+
 
     sudo pip install pip -U
     sudo pip install sh
