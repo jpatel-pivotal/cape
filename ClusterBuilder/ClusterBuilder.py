@@ -136,25 +136,28 @@ def prepServer(clusterNode, nodeCnt):
 
             time.sleep(10)
 
-            gpadminPW = os.environ.get("GPADMIN_PW")
-            rootPW = os.environ.get("ROOT_PW")
 
-            (stdin, stdout, stderr) = ssh.exec_command("sudo echo " + gpadminPW + " | sudo passwd --stdin gpadmin")
+            (stdin, stdout, stderr) = ssh.exec_command("sudo echo " + os.environ.get("ROOT_PW") + " | sudo passwd --stdin root")
             stdout.readlines()
             stderr.readlines()
-            (stdin, stdout, stderr) = ssh.exec_command("sudo echo " + rootPW + " | sudo passwd --stdin root")
-            stdout.readlines()
-            stderr.readlines()
-
             ssh.exec_command("sudo chmod +x /tmp/prepareHost.sh")
             (stdin, stdout, stderr) = ssh.exec_command("/tmp/prepareHost.sh &> /tmp/prepareHost.log")
             stdout.readlines()
             stderr.readlines()
-            (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir /data")
+            (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir /data;sudo mount -a")
+            stdout.readlines()
+            stderr.readlines()
+            homeDir = os.environ.get("BASE_HOME") + "/home"
+            (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p " + homeDir + ";sudo useradd -b " + homeDir + " -s " + "/bin/bash -m gpadmin")
+            stdout.readlines()
+            stderr.readlines()
+
+            (stdin, stdout, stderr) = ssh.exec_command("sudo echo " + os.environ.get("GPADMIN_PW") + " | sudo passwd --stdin gpadmin")
             stdout.readlines()
             stderr.readlines()
 
             # could change to node.reboot
+            print clusterNode["nodeName"]+": Rebooting"
             (stdin, stdout, stderr) = ssh.exec_command("sudo reboot")
             stdout.readlines()
             stderr.readlines()
@@ -226,16 +229,15 @@ def keyShare(clusterDictionary):
                 ssh.set_missing_host_key_policy(WarningPolicy())
                 ssh.connect(node["externalIP"], 22, "gpadmin", password=str(os.environ.get("GPADMIN_PW")), timeout=120)
                 (stdin, stdout, stderr) = ssh.exec_command("echo -e  'y\n'|ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''")
-                stderr.readlines()
-                stdout.readlines()
-                (stdin, stdout, stderr) = ssh.exec_command(
-                    "sudo rm -f /etc/yum.repos.d/CentOS-SCL*;sudo yum clean all;sudo yum install -y epel-release;sudo yum install -y sshpass git")
-                stderr.readlines()
-                stdout.readlines()
+                #(stdin, stdout, stderr) = ssh.exec_command("sudo rm -f /etc/yum.repos.d/CentOS-SCL*;sudo yum clean all")
+                #stderr.readlines()
+                #stdout.readlines()
+                # (stdin, stdout, stderr) = ssh.exec_command("sudo rm -f /etc/yum.repos.d/CentOS-SCL*;sudo yum clean all;sudo yum install -y epel-release;sudo yum install -y sshpass git")
+                # stderr.readlines()
+                # stdout.readlines()
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
-                    (stdin, stdout, stderr) = ssh.exec_command(
-                        "sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh-copy-id  gpadmin@" + node1["nodeName"])
+                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh-copy-id  gpadmin@" + node1["nodeName"])
                     stderr.readlines()
                     stdout.readlines()
 

@@ -64,7 +64,7 @@ def cliParse():
             print "HDB Builder"
             ClusterBuilder.buildServers(clusterDictionary)
             SoftwareDownload.downloadSoftware(clusterDictionary)
-            StudentAccounts.add(clusterDictionary)
+            #StudentAccounts.add(clusterDictionary)
 
             # if (args.verbose == True):
             #     clusterNodes = ClusterBuilder.buildServers(config)

@@ -6,7 +6,7 @@ import paramiko
 from paramiko import WarningPolicy
 
 from LabBuilder import AccessHostPrepare
-
+from LabBuilder import StudentAccounts
 
 def installGPDB(clusterDictionary, downloads):
     print clusterDictionary["clusterName"] + ": Installing Greenplum Database on Cluster"
@@ -79,7 +79,18 @@ def installGPDB(clusterDictionary, downloads):
     AccessHostPrepare.installComponents(clusterDictionary)
     modifyPHGBA(masterNode, accessNode)
     setGPADMINPW(masterNode)
+
+    # NEEDS TO BE OPTIONAL
+    threads = []
+    for clusterNode in clusterDictionary["clusterNodes"]:
+        addStudentAccountThread = threading.Thread(target=StudentAccounts.addStudentAccount, args=(clusterNode,))
+        threads.append(addStudentAccountThread)
+        addStudentAccountThread.start()
+    for x in threads:
+        x.join()
+
     print clusterDictionary["clusterName"] + ": Access Host Install Complete"
+
 
 
 def installComponents(masterNode, downloads):

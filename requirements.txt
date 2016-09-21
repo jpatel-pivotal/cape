@@ -1,3 +1,4 @@
+requests
 apache-libcloud==1.1.0
 cryptography==1.5
 google-api-python-client==1.5.1
