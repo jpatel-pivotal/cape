@@ -28,8 +28,12 @@ def cliParse():
                                required=True)
 
     parser_create.add_argument("-v", dest='verbose', action='store_true', required=False)
-    parser_create.add_argument("-l", dest='verbose', action='store_true', required=False,
-                               help="Include Lab creation in Cluster Buildout")
+
+    parser_create.add_argument("--config", dest='config', action="store", help="Config.env file",
+                               required=False)
+
+    #parser_create.add_argument("-l", dest='lab', action='store_true', required=False,
+    #                         help="Include Lab creation in Cluster Buildout")
 
     parser_stage.add_argument("--name", dest='clustername', action="store", help="Name of Cluster to be Staged",
                               required=True)
@@ -53,6 +57,10 @@ def cliParse():
         clusterDictionary["nodeQty"] = args.nodes
         clusterDictionary["clusterType"] = "pivotal-" + args.type
         clusterDictionary["segmentDBs"] = os.environ.get("SEGMENTDBS")
+        if (args.config):
+            print "External Configuration"
+            load_dotenv(args.config)
+
         if (args.type == "vanilla"):
             ClusterBuilder.buildServers(clusterDictionary)
         elif (args.type == "gpdb"):
