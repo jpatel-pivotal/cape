@@ -129,9 +129,9 @@ def prepServer(clusterNode, nodeCnt):
             ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None,
                         key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
             sftp = ssh.open_sftp()
-            sftp.put('./configs/sysctl.conf.cape', '/tmp/sysctl.conf.cape', confirm=True)
-            sftp.put('./configs/fstab.cape', '/tmp/fstab.cape', confirm=True)
-            sftp.put('./configs/limits.conf.cape', '/tmp/limits.conf.cape', confirm=True)
+            sftp.put('./templates/sysctl.conf.cape', '/tmp/sysctl.conf.cape', confirm=True)
+            sftp.put('./templates/fstab.cape', '/tmp/fstab.cape', confirm=True)
+            sftp.put('./templates/limits.conf.cape', '/tmp/limits.conf.cape', confirm=True)
             sftp.put('./scripts/prepareHost.sh', '/tmp/prepareHost.sh', confirm=True)
 
             time.sleep(10)

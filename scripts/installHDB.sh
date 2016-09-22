@@ -196,7 +196,7 @@ echo "host     all         gpadmin         127.0.0.1/28    trust" >> /data/hawq/
 echo "host all all ${ip}/32 trust" >> /data/hawq/master/pg_hba.conf
 
 
-# ADD PG defaults to .bashrc
+# ADD PG templates to .bashrc
 sudo -u gpadmin bash -c "echo 'export PGPORT=10432' >> /home/gpadmin/.bashrc"
 sudo -u gpadmin bash -c "source /usr/local/hawq/greenplum_path.sh; hawq stop cluster -a --reload"
 
