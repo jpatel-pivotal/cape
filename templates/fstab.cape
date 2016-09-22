@@ -1,0 +1,2 @@
+#######   CAPE DATA DISK #####
+LABEL=data /data xfs rw,noatime,inode64,allocsize=16m 0 0
