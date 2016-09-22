@@ -69,25 +69,25 @@ def installGPDB(clusterDictionary, downloads):
     print clusterDictionary["clusterName"] + ": Preparing Access Host "
 
     # NEED TO MAKE OPTIONAL
-    threads = []
-    for clusterNode in clusterDictionary["clusterNodes"]:
-        installDSPackagesThread = threading.Thread(target=installDSPackages, args=(clusterNode,))
-        threads.append(installDSPackagesThread)
-        installDSPackagesThread.start()
-    for x in threads:
-        x.join()
+    # threads = []
+    # for clusterNode in clusterDictionary["clusterNodes"]:
+    #     installDSPackagesThread = threading.Thread(target=installDSPackages, args=(clusterNode,))
+    #     threads.append(installDSPackagesThread)
+    #     installDSPackagesThread.start()
+    # for x in threads:
+    #     x.join()
     AccessHostPrepare.installComponents(clusterDictionary)
     modifyPHGBA(masterNode, accessNode)
     setGPADMINPW(masterNode)
 
     # NEEDS TO BE OPTIONAL
-    threads = []
-    for clusterNode in clusterDictionary["clusterNodes"]:
-        addStudentAccountThread = threading.Thread(target=StudentAccounts.addStudentAccount, args=(clusterNode,))
-        threads.append(addStudentAccountThread)
-        addStudentAccountThread.start()
-    for x in threads:
-        x.join()
+    # threads = []
+    # for clusterNode in clusterDictionary["clusterNodes"]:
+    #     addStudentAccountThread = threading.Thread(target=StudentAccounts.addStudentAccount, args=(clusterNode,))
+    #     threads.append(addStudentAccountThread)
+    #     addStudentAccountThread.start()
+    # for x in threads:
+    #     x.join()
 
     print clusterDictionary["clusterName"] + ": Access Host Install Complete"
 
