@@ -502,7 +502,7 @@ def initDB(clusterNode, clusterName):
     # Read the template, modify it, write it to the cluster directory and the master
 
 
-    with open("./templates/gpinitsystem_config.template", 'r+') as gpConfigTemplate:
+    with open(os.getcwd()+"/templates/gpinitsystem_config.template", 'r+') as gpConfigTemplate:
         gpConfigTemplateData = gpConfigTemplate.read()
         gpConfigTemplateModData = gpConfigTemplateData.replace("%MASTER%", clusterNode["nodeName"])
 
