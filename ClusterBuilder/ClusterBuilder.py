@@ -122,7 +122,7 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
     # Set Server Role
 
     if (nodeCnt) == 0:
-        clusterNode["role"] = "access"
+        clusterNode["role"] = "worker"
     elif (nodeCnt) == 1:
         clusterNode["role"] = "master1"
     elif (nodeCnt) == 2:
