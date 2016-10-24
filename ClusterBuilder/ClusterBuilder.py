@@ -97,8 +97,8 @@ def buildServers(clusterDictionary):
     for x in threads:
         x.join()
     print clusterDictionary["clusterName"] + ": Cluster Configuration Complete"
-    print(clusterDictionary)
     clusterDictionary["clusterNodes"] = clusterNodes
+    print(clusterDictionary)
     hostsFiles(clusterDictionary)
     keyShare(clusterDictionary)
 
