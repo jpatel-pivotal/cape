@@ -76,10 +76,10 @@ def installGPDB(clusterDictionary, downloads):
     #     installDSPackagesThread.start()
     # for x in threads:
     #     x.join()
-    # Turning off for now
-    # AccessHostPrepare.installComponents(clusterDictionary)
-    # modifyPHGBA(masterNode, accessNode)
-    # setGPADMINPW(masterNode)
+
+    AccessHostPrepare.installComponents(clusterDictionary)
+    modifyPHGBA(masterNode, accessNode)
+    setGPADMINPW(masterNode)
 
     # NEEDS TO BE OPTIONAL
     # threads = []
