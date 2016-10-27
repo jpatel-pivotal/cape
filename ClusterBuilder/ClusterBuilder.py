@@ -68,8 +68,8 @@ def buildServers(clusterDictionary):
     print clusterDictionary["clusterName"] + ": Cluster Nodes Created in Google Cloud"
     print clusterDictionary["clusterName"] + ": Cluster Configuration Started"
 
-    # THREAD THIS
     threads = []
+    buildFSTAB(clusterDictionary, int(os.environ.get("DISK_QTY")))
     for nodeCnt in range(int(clusterDictionary["nodeQty"])):
         nodeName = clusterDictionary["clusterName"] + "-" + str(nodeCnt).zfill(3)
         clusterNode = {}
@@ -78,21 +78,22 @@ def buildServers(clusterDictionary):
         ####  MOUNTS SHOULD GO UNDER /DATA AND BE DATA1,DATA2,DATAN
         ####  THIS MEANS THE 1 DISK USE CASE SHOULD BE MOUNTED THE SAME WAY.
 
-
-        volume = driver.create_volume(os.environ.get("DISK_SIZE"), nodeName + "-data-disk", None, None,
+        for diskNum in range(1,int(os.environ.get("DISK_QTY"))+1):
+            volume = driver.create_volume(os.environ.get("DISK_SIZE"), nodeName + "-data-disk-"+str(diskNum), None, None,
                                       None, False, "pd-standard")
 
-        clusterNode["nodeName"] = nodeName
-        clusterNode["dataVolume"] = str(volume)
+            clusterNode["nodeName"] = nodeName
+            clusterNode["dataVolume"] = str(volume)
 
-        node = driver.ex_get_node(nodeName)
-        driver.attach_volume(node, volume, device=None, ex_mode=None, ex_boot=False, ex_type=None, ex_source=None,
+            node = driver.ex_get_node(nodeName)
+            driver.attach_volume(node, volume, device=None, ex_mode=None, ex_boot=False, ex_type=None, ex_source=None,
                              ex_auto_delete=True, ex_initialize_params=None, ex_licenses=None, ex_interface=None)
         clusterNode["externalIP"] = str(node).split(",")[3].split("'")[1]
         clusterNode["internalIP"] = str(node).split(",")[4].split("'")[1]
         print "     " + nodeName + ": External IP: " + clusterNode["externalIP"]
         print "     " + nodeName + ": Internal IP: " + clusterNode["internalIP"]
-        prepThread = threading.Thread(target=prepServer, args=(clusterNode, nodeCnt))
+
+        prepThread = threading.Thread(target=prepServer, args=(clusterDictionary,clusterNode, nodeCnt))
         clusterNodes.append(clusterNode)
         threads.append(prepThread)
         prepThread.start()
@@ -103,8 +104,20 @@ def buildServers(clusterDictionary):
     hostsFiles(clusterDictionary)
     keyShare(clusterDictionary)
 
+def buildFSTAB(clusterDictionary,diskCNT):
+    clusterPath = "./clusterConfigs/" + clusterDictionary["clusterName"]
+    currentPath = os.getcwd()
+    os.chdir(clusterPath)
+    with open("fstab.cape", "w") as fstabFile:
+        fstabFile.write("######  CAPE ENTRIES #######\n")
+        for disk in range(1,diskCNT+1):
+            fstabFile.write("LABEL=data"+str(disk)+ "   /data/disk"+str(disk) + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
+    os.chdir(currentPath)
 
-def prepServer(clusterNode, nodeCnt):
+
+
+
+def prepServer(clusterDictionary,clusterNode, nodeCnt):
     warnings.simplefilter("ignore")
     paramiko.util.log_to_file("/tmp/paramiko.log")
     nodeName = clusterNode["nodeName"]
@@ -130,7 +143,7 @@ def prepServer(clusterNode, nodeCnt):
                         key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
             sftp = ssh.open_sftp()
             sftp.put('./templates/sysctl.conf.cape', '/tmp/sysctl.conf.cape', confirm=True)
-            sftp.put('./templates/fstab.cape', '/tmp/fstab.cape', confirm=True)
+            sftp.put('./clusterConfigs/' + clusterDictionary["clusterName"]+ '/fstab.cape', '/tmp/fstab.cape', confirm=True)
             sftp.put('./templates/limits.conf.cape', '/tmp/limits.conf.cape', confirm=True)
             sftp.put('./scripts/prepareHost.sh', '/tmp/prepareHost.sh', confirm=True)
 
@@ -141,7 +154,7 @@ def prepServer(clusterNode, nodeCnt):
             stdout.readlines()
             stderr.readlines()
             ssh.exec_command("sudo chmod +x /tmp/prepareHost.sh")
-            (stdin, stdout, stderr) = ssh.exec_command("/tmp/prepareHost.sh &> /tmp/prepareHost.log")
+            (stdin, stdout, stderr) = ssh.exec_command("/tmp/prepareHost.sh " + os.environ.get("DISK_QTY") + " &> /tmp/prepareHost.log")
             stdout.readlines()
             stderr.readlines()
             (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir /data;sudo mount -a")
