@@ -501,14 +501,31 @@ def installBits(clusterNode):
 def initDB(clusterNode, clusterName):
     # Read the template, modify it, write it to the cluster directory and the master
 
+    ## BUILD DATA DIRECTORY AND MIRROR DIRECTORY
+    # SHOULD BE #SEGDB ENTRIES ACROSS # DRIVES.
+    numDisks = os.environ.get("DISK_QTY")
+    segDBs = os.environ.get("SEGMENTDBS")
+    diskBase = os.environ.get("BASE_HOME")
+    dataDirectories =""
+    mirrorDirectories = ""
+    for diskNum in range(1,int(numDisks)+1):
+        for segNum in range (1,int(segDBs)+1):
+            dataDirectories = dataDirectories + diskBase+"/disk"+str(diskNum)+"/primary "
+            mirrorDirectories = mirrorDirectories + diskBase+"/disk"+str(diskNum)+"/mirror "
+    print dataDirectories
+    print mirrorDirectories
+
 
     with open(str(os.environ.get("CAPE_HOME"))+"/templates/gpinitsystem_config.template", 'r+') as gpConfigTemplate:
         gpConfigTemplateData = gpConfigTemplate.read()
         gpConfigTemplateModData = gpConfigTemplateData.replace("%MASTER%", clusterNode["nodeName"])
+        gpConfigDirectoriesData = gpConfigTemplateModData.replace("declare -a DATA_DIRECTORY=(/data/primary /data/primary)","declare -a DATA_DIRECTORY=("+dataDirectories+")")
+        gpConfigTemplateData  = gpConfigDirectoriesData.replace("declare -a MIRROR_DATA_DIRECTORY=(/data/mirror /data/mirror)","declare -a MIRROR_DATA_DIRECTORY=("+mirrorDirectories+")")
+
 
     with open(os.environ.get("CAPE_HOME") + "/clusterConfigs/" + str(clusterName) + "/gpinitsystem_config",
               'w') as gpConfigCluster:
-        gpConfigCluster.write(gpConfigTemplateModData)
+        gpConfigCluster.write(gpConfigTemplateData)
 
     connected = False
     attemptCount = 0
