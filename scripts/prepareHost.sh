@@ -13,7 +13,17 @@
 setupDisk(){
 echo "Setup Disk"
 sudo yum -y install xfsprogs xfsdump
-sudo fdisk /dev/sdb <<EOF
+
+for d in $(seq 1 $1)
+do
+    sudo mkdir -p /data/disk$d
+done
+cnt=1
+echo $1
+for c in {b..z}
+do
+  echo $c
+sudo fdisk /dev/sd$c <<EOF
 n
 p
 1
@@ -21,9 +31,16 @@ p
 
 w
 EOF
-sudo mkdir /data
-sudo sh -c "cat /tmp/fstab.cape >> /etc/fstab"
-sudo mkfs.xfs -f /dev/sdb1 -L data
+#sudo sh -c 'echo "LABEL=data$cnt /data/data$cnt xfs rw,noatime,inode64,allocsize=16m 0 0" >> /etc/fstab'
+echo $cnt
+echo "MAKEFS"
+echo "/dev/sd$c -L data$cnt"
+sudo mkfs.xfs -f /dev/sd$c -L data$cnt
+((++cnt > $1)) && break
+done
+sudo sh -c 'cat /tmp/fstab.cape >> /etc/fstab'
+
+
 }
 
 securitySetup(){
@@ -73,7 +90,7 @@ serverSetup(){
 _main() {
     securitySetup
     networkSetup
-    setupDisk
+    setupDisk $1
     installSoftware
     serverSetup
 
