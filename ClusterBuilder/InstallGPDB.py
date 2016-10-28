@@ -277,7 +277,7 @@ def setPaths(clusterNode):
             stdout.readlines()
             stderr.readlines()
             (stdin, stdout, stderr) = ssh.exec_command(
-                "echo 'export MASTER_DATA_DIRECTORY=/data/master/gpseg-1\n' >> ~/.bashrc")
+                "echo 'export MASTER_DATA_DIRECTORY=/data/disk1/master/gpseg-1\n' >> ~/.bashrc")
             stdout.readlines()
             stderr.readlines()
             connected = True
@@ -308,16 +308,20 @@ def makeDirectories(clusterNode):
                         key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")),
                         timeout=120)
             if "master" in clusterNode["role"]:
-                (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/master")
+                (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/disk1/master")
                 stdout.readlines()
                 stderr.readlines()
             else:
-                (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/primary")
-                stdout.readlines()
-                stderr.readlines()
-                (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/mirror")
-                stdout.readlines()
-                stderr.readlines()
+
+                numDisks = os.environ.get("DISK_QTY")
+                segDBs = os.environ.get("SEGMENTDBS")
+                for diskNum in range(1, int(numDisks) + 1):
+                    (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/disk"+str(diskNum)+"/primary")
+                    stdout.readlines()
+                    stderr.readlines()
+                    (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/disk"+str(diskNum)+"/mirror")
+                    stdout.readlines()
+                    stderr.readlines()
             (stdin, stdout, stderr) = ssh.exec_command("sudo chown -R gpadmin: /data")
             stdout.readlines()
             stderr.readlines()
@@ -512,9 +516,6 @@ def initDB(clusterNode, clusterName):
         for segNum in range (1,int(segDBs)+1):
             dataDirectories = dataDirectories + diskBase+"/disk"+str(diskNum)+"/primary "
             mirrorDirectories = mirrorDirectories + diskBase+"/disk"+str(diskNum)+"/mirror "
-    print dataDirectories
-    print mirrorDirectories
-
 
     with open(str(os.environ.get("CAPE_HOME"))+"/templates/gpinitsystem_config.template", 'r+') as gpConfigTemplate:
         gpConfigTemplateData = gpConfigTemplate.read()

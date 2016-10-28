@@ -32,10 +32,7 @@ def buildServers(clusterDictionary):
     clusterNodes = []
 
     ComputeEngine = get_driver(Provider.GCE)
-
-    driver = ComputeEngine(os.environ.get("SVC_ACCOUNT"),
-                           str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SVC_ACCOUNT_KEY")),
-                           project=str(os.environ.get("PROJECT")), datacenter=str(os.environ.get("ZONE")))
+    driver = ComputeEngine(os.environ.get("SVC_ACCOUNT"),str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SVC_ACCOUNT_KEY")),project=str(os.environ.get("PROJECT")), datacenter=str(os.environ.get("ZONE")))
     gce_disk_struct = [
         {
             "kind": "compute#attachedDisk",
@@ -240,6 +237,7 @@ def keyShare(clusterDictionary):
                 attemptCount += 1
                 ssh = paramiko.SSHClient()
                 ssh.set_missing_host_key_policy(WarningPolicy())
+
                 ssh.connect(node["externalIP"], 22, "gpadmin", password=str(os.environ.get("GPADMIN_PW")), timeout=120)
                 (stdin, stdout, stderr) = ssh.exec_command("echo -e  'y\n'|ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''")
                 #(stdin, stdout, stderr) = ssh.exec_command("sudo rm -f /etc/yum.repos.d/CentOS-SCL*;sudo yum clean all")
@@ -250,6 +248,7 @@ def keyShare(clusterDictionary):
                 # stdout.readlines()
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
+                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh gpadmin@" + node1["nodeName"]+ " -o StrictHostKeyChecking=no" )
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh-copy-id  gpadmin@" + node1["nodeName"])
                     stderr.readlines()
                     stdout.readlines()
