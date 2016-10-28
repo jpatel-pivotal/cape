@@ -30,7 +30,7 @@ MASTER_HOSTNAME=%MASTER%
 
 #### File system location where the master data directory
 #### will be created.
-MASTER_DIRECTORY=/data/master
+MASTER_DIRECTORY=/data/disk1/master
 
 #### Port number for the master instance.
 MASTER_PORT=5432
