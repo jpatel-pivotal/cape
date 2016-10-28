@@ -512,9 +512,26 @@ def initDB(clusterNode, clusterName):
     diskBase = os.environ.get("BASE_HOME")
     dataDirectories =""
     mirrorDirectories = ""
-    for diskNum in range(1,int(numDisks)+1):
+
+    if numDisks>1:
+        primaryStart=1
+        primaryEnd = int(numDisks)/2
+        mirrorStart = int(numDisks)/2 + 1
+        mirrorEnd = int(numDisks)
+    else:
+        primaryStart = 1
+        primaryEnd = 1
+        mirrorStart = 1
+        mirrorEnd = 1
+
+
+
+    for diskNum in range(primaryStart,primaryEnd+1):
         for segNum in range (1,int(segDBs)+1):
             dataDirectories = dataDirectories + diskBase+"/disk"+str(diskNum)+"/primary "
+
+    for diskNum in range(mirrorStart, mirrorEnd+1):
+        for segNum in range(1, int(segDBs) + 1):
             mirrorDirectories = mirrorDirectories + diskBase+"/disk"+str(diskNum)+"/mirror "
 
     with open(str(os.environ.get("CAPE_HOME"))+"/templates/gpinitsystem_config.template", 'r+') as gpConfigTemplate:
