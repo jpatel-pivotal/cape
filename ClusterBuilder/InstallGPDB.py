@@ -12,6 +12,7 @@ def installGPDB(clusterDictionary, downloads):
     print clusterDictionary["clusterName"] + ": Installing Greenplum Database on Cluster"
     threads = []
     masterNode = {}
+    accessNode = {}
     for clusterNode in clusterDictionary["clusterNodes"]:
         if "master1" in clusterNode["role"]:
             masterNode = clusterNode
@@ -66,7 +67,6 @@ def installGPDB(clusterDictionary, downloads):
     print clusterDictionary["clusterName"] + ": Installing Machine Learning Capabilities"
     installComponents(masterNode, downloads)
     print clusterDictionary["clusterName"] + ": Machine Learning Install Complete"
-    print clusterDictionary["clusterName"] + ": Preparing Access Host "
 
     # NEED TO MAKE OPTIONAL
     # threads = []
@@ -77,8 +77,13 @@ def installGPDB(clusterDictionary, downloads):
     # for x in threads:
     #     x.join()
 
-    AccessHostPrepare.installComponents(clusterDictionary)
-    modifyPHGBA(masterNode, accessNode)
+    if accessNode:
+        print clusterDictionary["clusterName"] + ": Preparing Access Host "
+        AccessHostPrepare.installComponents(clusterDictionary)
+        modifyPHGBA(masterNode)
+        print clusterDictionary["clusterName"] + ": Access Host Install Complete"
+    else:
+        modifyPHGBA(masterNode)
     setGPADMINPW(masterNode)
 
     # NEEDS TO BE OPTIONAL
@@ -90,7 +95,7 @@ def installGPDB(clusterDictionary, downloads):
     # for x in threads:
     #     x.join()
 
-    print clusterDictionary["clusterName"] + ": Access Host Install Complete"
+
 
 
 
@@ -365,7 +370,7 @@ def setGPADMINPW(masterNode):
             ssh.close()
 
 
-def modifyPHGBA(masterNode, accessNode):
+def modifyPHGBA(masterNode):
     connected = False
     attemptCount = 0
 
