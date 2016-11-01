@@ -123,17 +123,23 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
     if os.environ.get("STANDBY") == "yes" and os.environ.get("ACCESS") == "yes":
         if (nodeCnt) == 0:
             clusterNode["role"] = "access"
+            clusterDictionary["accessCount"] += 1
         elif (nodeCnt) == 1:
             clusterNode["role"] = "master1"
+            clusterDictionary["masterCount"] += 1
         elif (nodeCnt) == 2:
             clusterNode["role"] = "master2"
+            clusterDictionary["masterCount"] += 1
         else:
             clusterNode["role"] = "worker"
+            clusterDictionary["segmentCount"] += 1
     elif os.environ.get("STANDBY") == "no" and os.environ.get("ACCESS") == "no":
         if (nodeCnt) == 0:
             clusterNode["role"] = "master1"
+            clusterDictionary["masterCount"] += 1
         else:
             clusterNode["role"] = "worker"
+            clusterDictionary["segmentCount"] += 1
 
     connected = False
     attemptCount = 0
