@@ -41,7 +41,7 @@ def buildServers(clusterDictionary):
 
             'initializeParams': {
                 "sourceImage": "/projects/centos-cloud/global/images/" + str(os.environ.get("IMAGE")),
-                "diskSizeGb": 40,
+                "diskSizeGb": 100,
                 "diskStorageType": str(os.environ.get("DISK_TYPE")),
                 "diskType": "/compute/v1/projects/" + str(os.environ.get("PROJECT")) + "/zones/" + str(
                     os.environ.get("ZONE")) + "/diskTypes/" + str(os.environ.get("DISK_TYPE"))
@@ -107,6 +107,7 @@ def buildFSTAB(clusterDictionary,diskCNT):
     os.chdir(clusterPath)
     with open("fstab.cape", "w") as fstabFile:
         fstabFile.write("######  CAPE ENTRIES #######\n")
+        fstabFile.write("/swapfile    swap     swap    defaults     0 0\n")
         for disk in range(1,diskCNT+1):
             fstabFile.write("LABEL=data"+str(disk)+ "   /data/disk"+str(disk) + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
     os.chdir(currentPath)
