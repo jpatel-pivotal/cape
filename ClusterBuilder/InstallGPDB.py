@@ -159,11 +159,15 @@ def verifyInstall(masterNode, clusterDictionary):
 
             ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
             (stdin, stdout, stderr) = ssh.exec_command(
-                "psql")
+                "psql -c \"SELECT version() ;\"")
             return_code = stdout.channel.recv_exit_status()
+            stdout.readlines()
+            stderr.readlines()
             if return_code != 0:
+                print("Returned: " + str(return_code))
                 sys.exit("Failed to Verify initialization: Please Verify Database Manually.")
             else:
+                print (masterNode["nodeName"] + ": Performing detailed database verification")
                 (stdin, stdout, stderr) = ssh.exec_command(
                     "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'u';\"")
                 upSegments = int((stdout.readlines())[2])

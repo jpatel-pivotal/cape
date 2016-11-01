@@ -2,7 +2,7 @@ import os
 import threading
 import time
 import warnings
-
+import traceback
 import paramiko
 from libcloud.compute.providers import get_driver
 from libcloud.compute.types import Provider
@@ -241,6 +241,7 @@ def keyShare(clusterDictionary):
     # client.connect(clusterNode["externalIP"], 22, SSH_USERNAME, None, pkey=None, key_filename=SSH_KEY_PATH, timeout=120)
 
     for node in clusterDictionary["clusterNodes"]:
+        print("Working on Node: " + str(node["nodeName"]))
 
         connected = False
         attemptCount = 0
@@ -260,10 +261,11 @@ def keyShare(clusterDictionary):
                 # stdout.readlines()
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
+                    print("\t exchanging gpadmin key with " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh gpadmin@" + node1["nodeName"]+ " -o StrictHostKeyChecking=no" )
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh-copy-id  gpadmin@" + node1["nodeName"])
-                    stderr.readlines()
-                    stdout.readlines()
+                    print stderr.readlines()
+                    print stdout.readlines()
 
                 ssh.close()
                 ssh.connect(node["externalIP"], 22, "root", password=str(os.environ.get("ROOT_PW")),
@@ -273,17 +275,20 @@ def keyShare(clusterDictionary):
                 stdout.readlines()
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
+                    print("\t exchanging root key with " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command(
                         "sshpass -p " + os.environ.get("ROOT_PW") + "  ssh-copy-id  root@" + node1[
                             "nodeName"])
-                    stderr.readlines()
-                    stdout.readlines()
+                    print stderr.readlines()
+                    print stdout.readlines()
 
                 connected = True
             except Exception as e:
                 print e
+                print traceback.print_exc()
                 print node["nodeName"] + ": Attempting SSH Connection"
                 time.sleep(3)
+                print ("attempt Count: " + attemptCount + "/40")
                 if attemptCount > 40:
                     print "Failing Process"
                     exit()
