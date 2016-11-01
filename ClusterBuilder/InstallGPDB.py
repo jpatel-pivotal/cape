@@ -82,8 +82,10 @@ def installGPDB(clusterDictionary, downloads):
         print clusterDictionary["clusterName"] + ": Preparing Access Host "
         AccessHostPrepare.installComponents(clusterDictionary)
         print clusterDictionary["clusterName"] + ": Access Host Install Complete"
+        modifyPHGBA(masterNode)
+        print clusterDictionary["clusterName"] + ": Access Host configured to connect Complete"
 
-    modifyPHGBA(masterNode)
+
     setGPADMINPW(masterNode)
 
     # NEEDS TO BE OPTIONAL
@@ -372,6 +374,8 @@ def setGPADMINPW(masterNode):
             stderr.readlines()
             connected = True
         except Exception as e:
+            print e
+            print traceback.print_exc()
             print masterNode["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 1:
