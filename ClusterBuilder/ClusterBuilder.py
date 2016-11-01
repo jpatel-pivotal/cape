@@ -120,15 +120,21 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
     nodeName = clusterNode["nodeName"]
 
     # Set Server Role
+    if os.environ.get("STANDBY") == "yes" and os.environ.get("ACCESS") == "yes":
+        if (nodeCnt) == 0:
+            clusterNode["role"] = "access"
+        elif (nodeCnt) == 1:
+            clusterNode["role"] = "master1"
+        elif (nodeCnt) == 2:
+            clusterNode["role"] = "master2"
+        else:
+            clusterNode["role"] = "worker"
+    elif os.environ.get("STANDBY") == "no" and os.environ.get("ACCESS") == "no":
+        if (nodeCnt) == 0:
+            clusterNode["role"] = "master1"
+        else:
+            clusterNode["role"] = "worker"
 
-    if (nodeCnt) == 0:
-        clusterNode["role"] = "access"
-    elif (nodeCnt) == 1:
-        clusterNode["role"] = "master1"
-    elif (nodeCnt) == 2:
-        clusterNode["role"] = "master2"
-    else:
-        clusterNode["role"] = "worker"
     connected = False
     attemptCount = 0
     while not connected:

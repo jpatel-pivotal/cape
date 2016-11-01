@@ -12,6 +12,7 @@ def installGPDB(clusterDictionary, downloads):
     print clusterDictionary["clusterName"] + ": Installing Greenplum Database on Cluster"
     threads = []
     masterNode = {}
+    accessNode = {}
     for clusterNode in clusterDictionary["clusterNodes"]:
         if "master1" in clusterNode["role"]:
             masterNode = clusterNode
@@ -66,7 +67,6 @@ def installGPDB(clusterDictionary, downloads):
     print clusterDictionary["clusterName"] + ": Installing Machine Learning Capabilities"
     installComponents(masterNode, downloads)
     print clusterDictionary["clusterName"] + ": Machine Learning Install Complete"
-    print clusterDictionary["clusterName"] + ": Preparing Access Host "
 
     # NEED TO MAKE OPTIONAL
     # threads = []
@@ -76,8 +76,14 @@ def installGPDB(clusterDictionary, downloads):
     #     installDSPackagesThread.start()
     # for x in threads:
     #     x.join()
-    AccessHostPrepare.installComponents(clusterDictionary)
-    modifyPHGBA(masterNode, accessNode)
+
+    if accessNode:
+        print clusterDictionary["clusterName"] + ": Preparing Access Host "
+        AccessHostPrepare.installComponents(clusterDictionary)
+        modifyPHGBA(masterNode)
+        print clusterDictionary["clusterName"] + ": Access Host Install Complete"
+    else:
+        modifyPHGBA(masterNode)
     setGPADMINPW(masterNode)
 
     # NEEDS TO BE OPTIONAL
@@ -89,7 +95,7 @@ def installGPDB(clusterDictionary, downloads):
     # for x in threads:
     #     x.join()
 
-    print clusterDictionary["clusterName"] + ": Access Host Install Complete"
+
 
 
 
@@ -135,6 +141,7 @@ def installComponents(masterNode, downloads):
 
 def verifyInstall(masterNode, clusterDictionary):
     numberSegments = int(clusterDictionary["nodeQty"]) - 3
+
     totalSegmentDBs = numberSegments * int(clusterDictionary["segmentDBs"])
     # This should login to master and run some checks.
     # dbURI = queries.uri(masterNode["externalIP"], port=5432, dbname="template0", user="gpadmin", password=str(os.environ.get("GPADMIN_PW")))
@@ -363,7 +370,7 @@ def setGPADMINPW(masterNode):
             ssh.close()
 
 
-def modifyPHGBA(masterNode, accessNode):
+def modifyPHGBA(masterNode):
     connected = False
     attemptCount = 0
 
