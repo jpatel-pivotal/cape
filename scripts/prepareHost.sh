@@ -40,7 +40,11 @@ sudo mkfs.xfs -f /dev/sd$c -L data$cnt
 done
 sudo sh -c 'cat /tmp/fstab.cape >> /etc/fstab'
 
-
+#Configure 50GB swap file on boot disk for all nodes
+sudo fallocate -l 50g /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
 }
 
 securitySetup(){
