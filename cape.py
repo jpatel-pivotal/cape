@@ -57,6 +57,9 @@ def cliParse():
         clusterDictionary["nodeQty"] = args.nodes
         clusterDictionary["clusterType"] = "pivotal-" + args.type
         clusterDictionary["segmentDBs"] = os.environ.get("SEGMENTDBS")
+        clusterDictionary["masterCount"] = 0
+        clusterDictionary["accessCount"] = 0
+        clusterDictionary["segmentCount"] = 0
         if (args.config):
             print "External Configuration"
             load_dotenv(args.config)
