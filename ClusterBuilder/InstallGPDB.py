@@ -1,7 +1,8 @@
 import os
+import sys
 import threading
 import time
-
+import traceback
 import paramiko
 from paramiko import WarningPolicy
 
@@ -80,10 +81,11 @@ def installGPDB(clusterDictionary, downloads):
     if accessNode:
         print clusterDictionary["clusterName"] + ": Preparing Access Host "
         AccessHostPrepare.installComponents(clusterDictionary)
-        modifyPHGBA(masterNode)
         print clusterDictionary["clusterName"] + ": Access Host Install Complete"
-    else:
         modifyPHGBA(masterNode)
+        print clusterDictionary["clusterName"] + ": Access Host configured to connect Complete"
+
+
     setGPADMINPW(masterNode)
 
     # NEEDS TO BE OPTIONAL
@@ -140,9 +142,10 @@ def installComponents(masterNode, downloads):
 
 
 def verifyInstall(masterNode, clusterDictionary):
-    numberSegments = int(clusterDictionary["nodeQty"]) - 3
+    numberSegments = int(clusterDictionary["segmentCount"])
 
     totalSegmentDBs = numberSegments * int(clusterDictionary["segmentDBs"])
+
     # This should login to master and run some checks.
     # dbURI = queries.uri(masterNode["externalIP"], port=5432, dbname="template0", user="gpadmin", password=str(os.environ.get("GPADMIN_PW")))
     # Might need to wait on GPDB to come up
@@ -157,44 +160,54 @@ def verifyInstall(masterNode, clusterDictionary):
             ssh.set_missing_host_key_policy(WarningPolicy())
 
             ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
-
             (stdin, stdout, stderr) = ssh.exec_command(
-                "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'u';\"")
-            upSegments = int((stdout.readlines())[2])
+                "psql -c \"SELECT version() ;\"")
+            return_code = stdout.channel.recv_exit_status()
+            stdout.readlines()
             stderr.readlines()
-
-            (stdin, stdout, stderr) = ssh.exec_command(
-                "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'd';\"")
-            downSegments = int((stdout.readlines())[2])
-            stderr.readlines()
-
-            (stdin, stdout, stderr) = ssh.exec_command(
-                "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0;\"")
-            segments = int(stdout.readlines()[2])
-            stderr.readlines()
-
-            (stdin, stdout, stderr) = ssh.exec_command(
-                "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and role='p';\"")
-            primarySegments = int(stdout.readlines()[2])
-            stderr.readlines()
-
-            (stdin, stdout, stderr) = ssh.exec_command(
-                "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and role='m';\"")
-
-            mirrorSegments = int(stdout.readlines()[2])
-            stderr.readlines()
-
-            connected = True
-
-            if ((totalSegmentDBs * 2) == upSegments) and (totalSegmentDBs == primarySegments) and (
-                totalSegmentDBs == mirrorSegments):
-                print clusterDictionary["clusterName"] + ": Greenplum Database Initialization Verified"
+            if return_code != 0:
+                print("Returned: " + str(return_code))
+                sys.exit("Failed to Verify initialization: Please Verify Database Manually.")
             else:
-                print clusterDictionary[
+                print (masterNode["nodeName"] + ": Performing detailed database verification")
+                (stdin, stdout, stderr) = ssh.exec_command(
+                    "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'u';\"")
+                upSegments = int((stdout.readlines())[2])
+                stderr.readlines()
+
+                (stdin, stdout, stderr) = ssh.exec_command(
+                    "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'd';\"")
+                downSegments = int((stdout.readlines())[2])
+                stderr.readlines()
+
+                (stdin, stdout, stderr) = ssh.exec_command(
+                    "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0;\"")
+                segments = int(stdout.readlines()[2])
+                stderr.readlines()
+
+                (stdin, stdout, stderr) = ssh.exec_command(
+                    "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and role='p';\"")
+                primarySegments = int(stdout.readlines()[2])
+                stderr.readlines()
+
+                (stdin, stdout, stderr) = ssh.exec_command(
+                    "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and role='m';\"")
+
+                mirrorSegments = int(stdout.readlines()[2])
+                stderr.readlines()
+
+                connected = True
+
+                if ((totalSegmentDBs * 2) == upSegments) and (totalSegmentDBs == primarySegments) and (
+                    totalSegmentDBs == mirrorSegments):
+                    print clusterDictionary["clusterName"] + ": Greenplum Database Initialization Verified"
+                else:
+                    print clusterDictionary[
                           "clusterName"] + ": Something went wrong with the Database initialization, please verify manually"
 
         except Exception as e:
             print e
+            print traceback.print_exc()
             print masterNode["nodeName"] + ": Waiting on Database Connection"
             time.sleep(3)
             if attemptCount > 10:
@@ -361,6 +374,8 @@ def setGPADMINPW(masterNode):
             stderr.readlines()
             connected = True
         except Exception as e:
+            print e
+            print traceback.print_exc()
             print masterNode["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 1:
@@ -517,7 +532,7 @@ def initDB(clusterNode, clusterName):
     numDisks = os.environ.get("DISK_QTY")
     segDBs = os.environ.get("SEGMENTDBS")
     diskBase = os.environ.get("BASE_HOME")
-    dataDirectories =""
+    dataDirectories = ""
     mirrorDirectories = ""
 
     if numDisks>1:
