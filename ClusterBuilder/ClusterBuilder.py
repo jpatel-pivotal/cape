@@ -2,7 +2,7 @@ import os
 import threading
 import time
 import warnings
-
+import traceback
 import paramiko
 from libcloud.compute.providers import get_driver
 from libcloud.compute.types import Provider
@@ -41,7 +41,7 @@ def buildServers(clusterDictionary):
 
             'initializeParams': {
                 "sourceImage": "/projects/centos-cloud/global/images/" + str(os.environ.get("IMAGE")),
-                "diskSizeGb": 40,
+                "diskSizeGb": 100,
                 "diskStorageType": str(os.environ.get("DISK_TYPE")),
                 "diskType": "/compute/v1/projects/" + str(os.environ.get("PROJECT")) + "/zones/" + str(
                     os.environ.get("ZONE")) + "/diskTypes/" + str(os.environ.get("DISK_TYPE"))
@@ -107,6 +107,7 @@ def buildFSTAB(clusterDictionary,diskCNT):
     os.chdir(clusterPath)
     with open("fstab.cape", "w") as fstabFile:
         fstabFile.write("######  CAPE ENTRIES #######\n")
+        fstabFile.write("/swapfile    swap     swap    defaults     0 0\n")
         for disk in range(1,diskCNT+1):
             fstabFile.write("LABEL=data"+str(disk)+ "   /data/disk"+str(disk) + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
     os.chdir(currentPath)
@@ -123,17 +124,23 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
     if os.environ.get("STANDBY") == "yes" and os.environ.get("ACCESS") == "yes":
         if (nodeCnt) == 0:
             clusterNode["role"] = "access"
+            clusterDictionary["accessCount"] += 1
         elif (nodeCnt) == 1:
             clusterNode["role"] = "master1"
+            clusterDictionary["masterCount"] += 1
         elif (nodeCnt) == 2:
             clusterNode["role"] = "master2"
+            clusterDictionary["masterCount"] += 1
         else:
             clusterNode["role"] = "worker"
+            clusterDictionary["segmentCount"] += 1
     elif os.environ.get("STANDBY") == "no" and os.environ.get("ACCESS") == "no":
         if (nodeCnt) == 0:
             clusterNode["role"] = "master1"
+            clusterDictionary["masterCount"] += 1
         else:
             clusterNode["role"] = "worker"
+            clusterDictionary["segmentCount"] += 1
 
     connected = False
     attemptCount = 0
@@ -235,6 +242,7 @@ def keyShare(clusterDictionary):
     # client.connect(clusterNode["externalIP"], 22, SSH_USERNAME, None, pkey=None, key_filename=SSH_KEY_PATH, timeout=120)
 
     for node in clusterDictionary["clusterNodes"]:
+        print("Working on Node: " + str(node["nodeName"]))
 
         connected = False
         attemptCount = 0
@@ -254,10 +262,11 @@ def keyShare(clusterDictionary):
                 # stdout.readlines()
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
+                    print("\t exchanging gpadmin key with " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh gpadmin@" + node1["nodeName"]+ " -o StrictHostKeyChecking=no" )
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh-copy-id  gpadmin@" + node1["nodeName"])
-                    stderr.readlines()
-                    stdout.readlines()
+                    print stderr.readlines()
+                    print stdout.readlines()
 
                 ssh.close()
                 ssh.connect(node["externalIP"], 22, "root", password=str(os.environ.get("ROOT_PW")),
@@ -267,17 +276,20 @@ def keyShare(clusterDictionary):
                 stdout.readlines()
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
+                    print("\t exchanging root key with " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command(
                         "sshpass -p " + os.environ.get("ROOT_PW") + "  ssh-copy-id  root@" + node1[
                             "nodeName"])
-                    stderr.readlines()
-                    stdout.readlines()
+                    print stderr.readlines()
+                    print stdout.readlines()
 
                 connected = True
             except Exception as e:
                 print e
+                print traceback.print_exc()
                 print node["nodeName"] + ": Attempting SSH Connection"
                 time.sleep(3)
+                print ("attempt Count: " + attemptCount + "/40")
                 if attemptCount > 40:
                     print "Failing Process"
                     exit()
