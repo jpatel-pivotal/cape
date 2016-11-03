@@ -599,6 +599,14 @@ def initDB(clusterNode, clusterName):
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
             ssh.connect(clusterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
+            #
+            # Adding gpssh-exkeys here for now
+            # We need to figure out the key exchange and then remove this step
+            #
+            (stdin, stdout, stderr) = ssh.exec_command(
+                "source /usr/local/greenplum-db/greenplum_path.sh;gpssh-exkeys -f /tmp/workers")
+            stdout.readlines()
+            stderr.readlines()
             (stdin, stdout, stderr) = ssh.exec_command(
                 "source /usr/local/greenplum-db/greenplum_path.sh;gpinitsystem -c /tmp/gpinitsystem_config.cape -a")
             stdout.readlines()
@@ -608,7 +616,7 @@ def initDB(clusterNode, clusterName):
             print clusterNode["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 1:
-                print "Failing Process"
+                print "Failing InitDB Process"
                 exit()
         finally:
             ssh.close()
