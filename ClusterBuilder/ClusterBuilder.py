@@ -7,6 +7,7 @@ import paramiko
 from libcloud.compute.providers import get_driver
 from libcloud.compute.types import Provider
 from paramiko import WarningPolicy
+from paramiko import AutoAddPolicy
 
 
 def buildServers(clusterDictionary):
@@ -98,6 +99,7 @@ def buildServers(clusterDictionary):
         x.join()
     print clusterDictionary["clusterName"] + ": Cluster Configuration Complete"
     clusterDictionary["clusterNodes"] = clusterNodes
+    getNodeFQDN(clusterDictionary)
     hostsFiles(clusterDictionary)
     keyShare(clusterDictionary)
 
@@ -203,7 +205,7 @@ def hostsFiles(clusterDictionary):
     with open("hosts", "w") as hostsFile:
         hostsFile.write("######  CAPE ENTRIES #######\n")
         for node in clusterDictionary["clusterNodes"]:
-            hostsFile.write(node["internalIP"] + "  " + node["nodeName"] + "\n")
+            hostsFile.write(node["internalIP"] + "  " + node["nodeName"] + "  " + node["FQDN"] + "\n")
 
     with open("workers", "w") as workersFile:
         with open("allhosts", "w") as allhostsFile:
@@ -250,7 +252,7 @@ def keyShare(clusterDictionary):
             try:
                 attemptCount += 1
                 ssh = paramiko.SSHClient()
-                ssh.set_missing_host_key_policy(WarningPolicy())
+                ssh.set_missing_host_key_policy(AutoAddPolicy())
 
                 ssh.connect(node["externalIP"], 22, "gpadmin", password=str(os.environ.get("GPADMIN_PW")), timeout=120)
                 (stdin, stdout, stderr) = ssh.exec_command("echo -e  'y\n'|ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''")
@@ -262,11 +264,11 @@ def keyShare(clusterDictionary):
                 # stdout.readlines()
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
-                    print("\t exchanging gpadmin key with " + str(node1["nodeName"]))
-                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh gpadmin@" + node1["nodeName"]+ " -o StrictHostKeyChecking=no" )
+                    # print("\t exchanging gpadmin key with " + str(node1["nodeName"]))
+                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh gpadmin@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh-copy-id  gpadmin@" + node1["nodeName"])
-                    print stderr.readlines()
-                    print stdout.readlines()
+                    stderr.readlines()
+                    stdout.readlines()
 
                 ssh.close()
                 ssh.connect(node["externalIP"], 22, "root", password=str(os.environ.get("ROOT_PW")),
@@ -276,12 +278,13 @@ def keyShare(clusterDictionary):
                 stdout.readlines()
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
-                    print("\t exchanging root key with " + str(node1["nodeName"]))
+                    # print("\t exchanging root key with " + str(node1["nodeName"]))
+                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh gpadmin@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
                     (stdin, stdout, stderr) = ssh.exec_command(
                         "sshpass -p " + os.environ.get("ROOT_PW") + "  ssh-copy-id  root@" + node1[
                             "nodeName"])
-                    print stderr.readlines()
-                    print stdout.readlines()
+                    stderr.readlines()
+                    stdout.readlines()
 
                 connected = True
             except Exception as e:
@@ -316,11 +319,45 @@ def hostFileUpload(clusterNode):
             sftp.put("hosts", "/tmp/hosts")
             sftp.put("allhosts", "/tmp/allhosts")
             sftp.put("workers", "/tmp/workers")
+
             (stdin, stdout, stderr) = ssh.exec_command("sudo sh -c 'cat /tmp/hosts >> /etc/hosts'")
             connected = True
         except Exception as e:
             # print e
             print "     " + clusterNode["nodeName"] + ": Attempting SSH Connection"
+            time.sleep(3)
+            if attemptCount > 40:
+                print "Failing Process"
+                exit()
+        finally:
+            ssh.close()
+
+
+def getNodeFQDN(clusterDictionary):
+    warnings.simplefilter("ignore")
+    paramiko.util.log_to_file("/tmp/paramiko.log")
+
+    connected = False
+    attemptCount = 0
+
+    while not connected:
+        try:
+            attemptCount += 1
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(WarningPolicy())
+            for node in clusterDictionary["clusterNodes"]:
+                ssh.connect(node["externalIP"], 22, "gpadmin", password=str(os.environ.get("GPADMIN_PW")), timeout=120)
+                (stdin, stdout, stderr) = ssh.exec_command("hostname -f ")
+                fqdn = stdout.read()
+                stdout.readlines()
+                stderr.readlines()
+                node["FQDN"] = fqdn.strip()
+
+            connected = True
+        except Exception as e:
+            # print e
+            # print traceback.print_exc()
+            print "     " + node["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 40:
                 print "Failing Process"
