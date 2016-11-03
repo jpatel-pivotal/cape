@@ -1,12 +1,14 @@
 import argparse
 import datetime
 import os
+import sys
 
 from dotenv import load_dotenv
 
 from ClusterBuilder import ClusterBuilder
 from ClusterBuilder import InstallGPDB
 from ClusterBuilder import SoftwareDownload
+from ClusterDestroyer import ClusterDestroyer
 from LabBuilder import StudentAccounts
 
 
@@ -37,16 +39,23 @@ def cliParse():
 
     parser_stage.add_argument("--name", dest='clustername', action="store", help="Name of Cluster to be Staged",
                               required=True)
-    parser_query.add_argument("--name", dest='clustername', action="store", help="Name of Cluster to be Staged",
+    parser_query.add_argument("--name", dest='clustername', action="store", help="Name of Cluster to be Queried",
                               required=True)
-
+    parser_query.add_argument("--nodes", dest='nodes', default=1, action="store", help="Number of Nodes to be Queried",
+                               required=True)
+    parser_query.add_argument("--config", dest='config', action="store", help="Config.env file",
+                               required=False)
     parser_gpdb.add_argument("--clustername", dest='clustername', action="store", help="Name of Cluster to be Staged",
                              required=True)
 
     parser_gpdb.add_argument("--action", dest='action', action="store", help="start/stop/state", required=True)
 
-    # parser_destroy.add_argument("--clustername", dest='clustername', action="store",help="Name of Cluster to be Deleted",required=True)
+    parser_destroy.add_argument("--name", dest='clustername', action="store",help="Name of Cluster to be Deleted",required=True)
 
+    parser_destroy.add_argument("--config", dest='config', action="store", help="Config.env file",
+                               required=False)
+    parser_destroy.add_argument("--nodes", dest='nodes', default=1, action="store", help="Number of Nodes to be Created",
+                               required=True)
 
     args = parser.parse_args()
 
@@ -107,6 +116,22 @@ def cliParse():
             #     with open("./" + clusterName + "/clusterInfo.json") as clusterInfoFile:
             #         clusterInfo = json.load(clusterInfoFile)
             #     Users.gpControl(clusterInfo,args.action)
+    elif (args.subparser_name == "query"):
+        clusterDictionary["clusterName"] = args.clustername
+        clusterDictionary["nodeQty"] = args.nodes
+        if (args.config):
+            print "External Configuration"
+            load_dotenv(args.config)
+        print clusterDictionary["clusterName"] + ": Querying Nodes in a Cluster"
+        print "Operation is not Implemented Yet"
+    elif (args.subparser_name == "destroy"):
+        clusterDictionary["clusterName"] = args.clustername
+        clusterDictionary["nodeQty"] = args.nodes
+        if (args.config):
+            print "External Configuration"
+            load_dotenv(args.config)
+        print clusterDictionary["clusterName"] + ": Destroying Cluster"
+        ClusterDestroyer.destroyServers(clusterDictionary)
 
 
 if __name__ == '__main__':
@@ -118,5 +143,5 @@ if __name__ == '__main__':
     os.environ["CONFIGS_PATH"] = os.getcwd() + "/configs/"
     cliParse()
     stopTime = datetime.datetime.today()
-    print  "Completion Time: ", stopTime
-    print  "Elapsed Time for Cluster Creation: ", stopTime - startTime
+    print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
+    print  "Elapsed Time: ", stopTime - startTime
