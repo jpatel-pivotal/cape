@@ -21,13 +21,12 @@ def checkServerState(clusterDictionary):
                                str(os.environ.get("SVC_ACCOUNT_KEY")),
                                project=str(os.environ.get("PROJECT")),
                                datacenter=str(os.environ.get("ZONE")))
-        nodeList = []
 
         nodes = driver.list_nodes(ex_zone=str(os.environ.get("ZONE")))
         for node in nodes:
             if clusterDictionary["clusterName"] in node.name:
-                nodeList.append(node.name, node.status)
-        print nodeList
+                print "\t" + node.name + ":" + node.state
+
     except Exception as e:
         print e
         print traceback.print_exc()
