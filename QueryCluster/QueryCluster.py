@@ -25,7 +25,7 @@ def checkServerState(clusterDictionary):
         nodes = driver.list_nodes(ex_zone=str(os.environ.get("ZONE")))
         for node in nodes:
             if clusterDictionary["clusterName"] in node.name:
-                print "\t" + node.name + ":" + node.state
+                print "\t" + node.name + ": " + node.state
 
     except Exception as e:
         print e
