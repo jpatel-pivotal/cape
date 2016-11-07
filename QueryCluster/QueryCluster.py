@@ -14,7 +14,7 @@ def checkServerState(clusterDictionary):
     warnings.simplefilter("ignore")
     print clusterDictionary["clusterName"] + ": Querying Cluster State Started"
     try:
-
+        print(os.getenv('CONFIGS_PATH'))
         ComputeEngine = get_driver(Provider.GCE)
         driver = ComputeEngine(os.environ.get("SVC_ACCOUNT"),
                                str(os.environ.get("CONFIGS_PATH")) +
@@ -23,9 +23,12 @@ def checkServerState(clusterDictionary):
                                datacenter=str(os.environ.get("ZONE")))
 
         nodes = driver.list_nodes(ex_zone=str(os.environ.get("ZONE")))
-        for node in nodes:
-            if clusterDictionary["clusterName"] in node.name:
-                print "\t" + node.name + ": " + node.state
+        if not nodes:
+            print "Did not find any nodes for that cluster!"
+        else:
+            for node in nodes:
+                if clusterDictionary["clusterName"] in node.name:
+                    print "\t" + node.name + ": " + node.state
 
     except Exception as e:
         print e
