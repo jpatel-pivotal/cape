@@ -43,7 +43,7 @@ def destroyServers(clusterDictionary):
         else:
             print clusterDictionary["clusterName"] + ": Destroyed Nodes"
             for i in range(0, int(len(nodeList))):
-                print "\t" + nodeList[i].name + ": " + delnodes[i]
+                print "\t" + nodeList[i].name + ": " + str(delnodes[i])
 
 
     except Exception as e:
