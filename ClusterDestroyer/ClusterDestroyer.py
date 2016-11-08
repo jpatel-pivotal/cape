@@ -29,14 +29,21 @@ def destroyServers(clusterDictionary):
         for node in nodes:
             if clusterDictionary["clusterName"] in node.name:
                 nodeList.append(node)
-                print node
-                print node.extra
+                # print node
+                # print node.extra
 
 
         delnodes = driver.ex_destroy_multiple_nodes(nodeList, ignore_errors=True,
                                                    destroy_boot_disk=False,
                                                    poll_interval=2, timeout=180)
-        print delnodes
+        if (len(nodeList)) != (len(delnodes)):
+            print clusterDictionary["clusterName"] + ": We may have deleted \
+                more nodes than expected!! "
+            print delnodes
+        else:
+            print clusterDictionary["clusterName"] + ": Destroyed Nodes"
+            for i in range(0, int(len(nodeList))):
+                print("\t" + nodeList[i].name, delnodes[i])
 
 
     except Exception as e:
