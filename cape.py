@@ -9,6 +9,7 @@ from ClusterBuilder import ClusterBuilder
 from ClusterBuilder import InstallGPDB
 from ClusterBuilder import SoftwareDownload
 from ClusterDestroyer import ClusterDestroyer
+from QueryCluster import QueryCluster
 from LabBuilder import StudentAccounts
 
 
@@ -123,7 +124,7 @@ def cliParse():
             print "External Configuration"
             load_dotenv(args.config)
         print clusterDictionary["clusterName"] + ": Querying Nodes in a Cluster"
-        print "Operation is not Implemented Yet"
+        QueryCluster.checkServerState(clusterDictionary)
     elif (args.subparser_name == "destroy"):
         clusterDictionary["clusterName"] = args.clustername
         clusterDictionary["nodeQty"] = args.nodes
