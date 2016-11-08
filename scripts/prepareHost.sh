@@ -36,15 +36,19 @@ echo $cnt
 echo "MAKEFS"
 echo "/dev/sd$c -L data$cnt"
 sudo mkfs.xfs -f /dev/sd$c -L data$cnt
+sudo echo deadline > /sys/block/sd$c/queue/scheduler
+sudo /sbin/blockdev --setra 16384 /dev/sd$c
 ((++cnt > $1)) && break
 done
 sudo sh -c 'cat /tmp/fstab.cape >> /etc/fstab'
 
-#Configure 50GB swap file on boot disk for all nodes
+# Configure 50GB swap file on boot disk for all nodes
 sudo fallocate -l 50g /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
+# Configure deadline scheduler to survive reboots
+sudo grubby --update-kernel=ALL --args="elevator=deadline"
 }
 
 securitySetup(){
