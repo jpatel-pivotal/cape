@@ -279,7 +279,7 @@ def keyShare(clusterDictionary):
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
                     # print("\t exchanging root key with " + str(node1["nodeName"]))
-                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh gpadmin@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
+                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("ROOT_PW") + "  ssh root@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
                     (stdin, stdout, stderr) = ssh.exec_command(
                         "sshpass -p " + os.environ.get("ROOT_PW") + "  ssh-copy-id  root@" + node1[
                             "nodeName"])
