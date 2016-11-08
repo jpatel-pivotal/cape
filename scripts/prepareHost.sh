@@ -37,6 +37,7 @@ echo "MAKEFS"
 echo "/dev/sd$c -L data$cnt"
 sudo mkfs.xfs -f /dev/sd$c -L data$cnt
 sudo echo deadline > /sys/block/sd$c/queue/scheduler
+sudo /sbin/blockdev --setra 16384 /dev/sd$c
 ((++cnt > $1)) && break
 done
 sudo sh -c 'cat /tmp/fstab.cape >> /etc/fstab'
