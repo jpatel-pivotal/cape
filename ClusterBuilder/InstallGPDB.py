@@ -535,9 +535,8 @@ def initDB(clusterNode, clusterName):
     dataDirectories = ""
     mirrorDirectories = ""
 
-    if numDisks>1:
+    if numDisks > 1:
         # Spread Primaries and mirrors across all drives
-
         segDBDirs = (int(segDBs)/2)
     else:
         # We only have one drive so no spreading of primaries and mirrors
