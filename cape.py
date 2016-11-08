@@ -46,6 +46,9 @@ def cliParse():
                                required=True)
     parser_query.add_argument("--config", dest='config', action="store", help="Config.env file",
                                required=False)
+    # Adding in type as an optinoal arg for now. to be used in the future
+    parser_query.add_argument("--type", dest='type', action="store",
+                               help="Type of cluster to be create (gpdb/hdb/vanilla", required=False)
     parser_gpdb.add_argument("--clustername", dest='clustername', action="store", help="Name of Cluster to be Staged",
                              required=True)
 
@@ -57,6 +60,9 @@ def cliParse():
                                required=False)
     parser_destroy.add_argument("--nodes", dest='nodes', default=1, action="store", help="Number of Nodes to be Created",
                                required=True)
+    # Adding in type as an optinoal arg for now. to be used in the future
+    parser_destroy.add_argument("--type", dest='type', action="store",
+                               help="Type of cluster to be create (gpdb/hdb/vanilla", required=False)
 
     args = parser.parse_args()
 
