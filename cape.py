@@ -32,7 +32,7 @@ def cliParse():
 
     parser_create.add_argument("-v", dest='verbose', action='store_true', required=False)
 
-    parser_create.add_argument("--config", dest='config', action="store", help="Config.env file",
+    parser_create.add_argument("--config", dest='config', default='./configs/config.env', action="store", help="Config.env file",
                                required=False)
 
     #parser_create.add_argument("-l", dest='lab', action='store_true', required=False,
@@ -44,7 +44,7 @@ def cliParse():
                               required=True)
     parser_query.add_argument("--nodes", dest='nodes', default=1, action="store", help="Number of Nodes to be Queried",
                                required=True)
-    parser_query.add_argument("--config", dest='config', action="store", help="Config.env file",
+    parser_query.add_argument("--config", dest='config', default='./configs/config.env'action="store", help="Config.env file",
                                required=False)
     # Adding in type as an optinoal arg for now. to be used in the future
     parser_query.add_argument("--type", dest='type', action="store",
@@ -56,7 +56,7 @@ def cliParse():
 
     parser_destroy.add_argument("--name", dest='clustername', action="store",help="Name of Cluster to be Deleted",required=True)
 
-    parser_destroy.add_argument("--config", dest='config', action="store", help="Config.env file",
+    parser_destroy.add_argument("--config", dest='config', default='./configs/config.env', action="store", help="Config.env file",
                                required=False)
     parser_destroy.add_argument("--nodes", dest='nodes', default=1, action="store", help="Number of Nodes to be Created",
                                required=True)
@@ -77,7 +77,7 @@ def cliParse():
         clusterDictionary["accessCount"] = 0
         clusterDictionary["segmentCount"] = 0
         if (args.config):
-            print "External Configuration"
+            print "Loading Configuration"
             load_dotenv(args.config)
 
         if (args.type == "vanilla"):
@@ -127,7 +127,7 @@ def cliParse():
         clusterDictionary["clusterName"] = args.clustername
         clusterDictionary["nodeQty"] = args.nodes
         if (args.config):
-            print "External Configuration"
+            print "Loading Configuration"
             load_dotenv(args.config)
         print clusterDictionary["clusterName"] + ": Querying Nodes in a Cluster"
         QueryCluster.checkServerState(clusterDictionary)
@@ -135,7 +135,7 @@ def cliParse():
         clusterDictionary["clusterName"] = args.clustername
         clusterDictionary["nodeQty"] = args.nodes
         if (args.config):
-            print "External Configuration"
+            print "Loading Configuration"
             load_dotenv(args.config)
         print clusterDictionary["clusterName"] + ": Destroying Cluster"
         ClusterDestroyer.destroyServers(clusterDictionary)
@@ -144,10 +144,7 @@ def cliParse():
 if __name__ == '__main__':
     startTime = datetime.datetime.today()
     print  "Start Time: ", startTime
-    dotenv_path = "./configs/config.env"
-    load_dotenv(dotenv_path)
     os.environ["CAPE_HOME"] = os.getcwd()
-    os.environ["CONFIGS_PATH"] = os.getcwd() + "/configs/"
     cliParse()
     stopTime = datetime.datetime.today()
     print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
