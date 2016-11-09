@@ -44,7 +44,7 @@ def cliParse():
                               required=True)
     parser_query.add_argument("--nodes", dest='nodes', default=1, action="store", help="Number of Nodes to be Queried",
                                required=True)
-    parser_query.add_argument("--config", dest='config', default='./configs/config.env'action="store", help="Config.env file",
+    parser_query.add_argument("--config", dest='config', default='./configs/config.env', action="store", help="Config.env file",
                                required=False)
     # Adding in type as an optinoal arg for now. to be used in the future
     parser_query.add_argument("--type", dest='type', action="store",
