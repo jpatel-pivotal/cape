@@ -14,7 +14,6 @@ def checkServerState(clusterDictionary):
     warnings.simplefilter("ignore")
     print clusterDictionary["clusterName"] + ": Querying Cluster State Started"
     try:
-        print(os.getenv('CONFIGS_PATH'))
         ComputeEngine = get_driver(Provider.GCE)
         driver = ComputeEngine(os.environ.get("SVC_ACCOUNT"),
                                str(os.environ.get("CONFIGS_PATH")) +
