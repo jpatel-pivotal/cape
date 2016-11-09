@@ -79,6 +79,7 @@ def cliParse():
         if (args.config):
             print "Loading Configuration"
             load_dotenv(args.config)
+            os.environ["CONFIGS_PATH"] = args.config
 
         if (args.type == "vanilla"):
             ClusterBuilder.buildServers(clusterDictionary)
@@ -129,6 +130,7 @@ def cliParse():
         if (args.config):
             print "Loading Configuration"
             load_dotenv(args.config)
+            os.environ["CONFIGS_PATH"] = args.config
         print clusterDictionary["clusterName"] + ": Querying Nodes in a Cluster"
         QueryCluster.checkServerState(clusterDictionary)
     elif (args.subparser_name == "destroy"):
@@ -137,6 +139,7 @@ def cliParse():
         if (args.config):
             print "Loading Configuration"
             load_dotenv(args.config)
+            os.environ["CONFIGS_PATH"] = args.config
         print clusterDictionary["clusterName"] + ": Destroying Cluster"
         ClusterDestroyer.destroyServers(clusterDictionary)
 
