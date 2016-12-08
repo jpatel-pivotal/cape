@@ -144,7 +144,10 @@ def installComponents(masterNode, downloads):
 def verifyInstall(masterNode, clusterDictionary):
     numberSegments = int(clusterDictionary["segmentCount"])
 
-    totalSegmentDBs = numberSegments * int(clusterDictionary["segmentDBs"])
+    #totalSegmentDBs = numberSegments * int(clusterDictionary["segmentDBs"])
+    totalSegmentDBs = numberSegments * int(os.environ.get("SEGMENTDBS"))
+
+
 
     # This should login to master and run some checks.
     # dbURI = queries.uri(masterNode["externalIP"], port=5432, dbname="template0", user="gpadmin", password=str(os.environ.get("GPADMIN_PW")))
