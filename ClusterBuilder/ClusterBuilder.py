@@ -137,7 +137,7 @@ def buildFSTAB(clusterDictionary,diskCNT):
     logging.debug('buildFSTAB Started')
     clusterPath = "./clusterConfigs/" + clusterDictionary["clusterName"]
     currentPath = os.getcwd()
-    logging.debug('Current Dir: ' + currentPath))
+    logging.debug('Current Dir: ' + currentPath)
     os.chdir(clusterPath)
     logging.debug('Changed Dir to: ' + clusterPath)
     with open("fstab.cape", "w") as fstabFile:
