@@ -144,8 +144,8 @@ def installComponents(masterNode, downloads):
 def verifyInstall(masterNode, clusterDictionary):
     numberSegments = int(clusterDictionary["segmentCount"])
 
-    #totalSegmentDBs = numberSegments * int(clusterDictionary["segmentDBs"])
-    totalSegmentDBs = numberSegments * int(os.environ.get("SEGMENTDBS"))
+    totalSegmentDBs = numberSegments * int(clusterDictionary["segmentDBs"])
+    #totalSegmentDBs = numberSegments * int(os.environ.get("SEGMENTDBS"))
 
 
 
