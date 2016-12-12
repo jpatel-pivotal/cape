@@ -287,7 +287,7 @@ def hostsFiles(clusterDictionary):
     logging.debug('Wrote allhosts and workers file')
     threads = []
     for clusterNode in clusterDictionary["clusterNodes"]:
-        logging.debug('Starting uploadThread for: ' + clusterNode)
+        logging.debug('Starting uploadThread for: ' + str(clusterNode["nodeName"]))
         uploadThread = threading.Thread(target=hostFileUpload, args=(clusterNode,))
         threads.append(uploadThread)
         uploadThread.start()
