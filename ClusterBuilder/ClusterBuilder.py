@@ -196,8 +196,8 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
             logging.debug('Connecting to Node: ' + clusterNode["nodeName"])
-            logging.debug('SSH IP: ' + clusterNode["externalIP"] + 'User: ' +
-                          os.environ["SSH_USERNAME"] + 'Key: ' +
+            logging.debug('SSH IP: ' + clusterNode["externalIP"] + ' User: ' +
+                          os.environ["SSH_USERNAME"] + ' Key: ' +
                           str(os.environ["CONFIGS_PATH"]) +
                           str(os.environ["SSH_KEY"]))
             ssh.connect(clusterNode["externalIP"], 22, os.environ["SSH_USERNAME"], None, pkey=None,
@@ -323,49 +323,49 @@ def keyShare(clusterDictionary):
                 ssh.set_missing_host_key_policy(AutoAddPolicy())
                 logging.debug('Connecting to Node: ' + str(node["nodeName"]))
                 logging.debug('SSH IP: ' + node["externalIP"] +
-                              'User: gpadmin')
+                              ' User: gpadmin')
                 ssh.connect(node["externalIP"], 22, "gpadmin", password=str(os.environ["GPADMIN_PW"]), timeout=120)
                 logging.debug('Generating id_rsa')
                 (stdin, stdout, stderr) = ssh.exec_command("echo -e  'y\n'|ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''")
-                logging.debug(stderr.readlines())
                 logging.debug(stdout.readlines())
+                logging.debug(stderr.readlines())
                 logging.debug('Configure SSH settings')
                 (stdin, stdout, stderr) = ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
-                logging.debug(stderr.readlines())
                 logging.debug(stdout.readlines())
+                logging.debug(stderr.readlines())
                 for node1 in clusterDictionary["clusterNodes"]:
                     logging.debug("exchange key ssh from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["GPADMIN_PW"] + "  ssh gpadmin@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
-                    logging.debug(stderr.readlines())
                     logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
                     logging.debug("exchange key ssh-copy-id from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["GPADMIN_PW"] + "  ssh-copy-id  gpadmin@" + node1["nodeName"])
-                    logging.debug(stderr.readlines())
                     logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
 
                 ssh.close()
                 logging.debug('Connecting to Node: ' + str(node["nodeName"]))
                 logging.debug('SSH IP: ' + node["externalIP"] +
-                              'User: root')
+                              ' User: root')
                 ssh.connect(node["externalIP"], 22, "root", password=str(os.environ["ROOT_PW"]),
                             timeout=120)
                 logging.debug('Generating id_rsa')
                 (stdin, stdout, stderr) = ssh.exec_command("echo -e  'y\n'|ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''")
-                logging.debug(stderr.readlines())
                 logging.debug(stdout.readlines())
+                logging.debug(stderr.readlines())
                 logging.debug('Configure SSH settings')
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
                     logging.debug("exchange key ssh from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["ROOT_PW"] + "  ssh root@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
-                    logging.debug(stderr.readlines())
                     logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
                     logging.debug("exchange key ssh-copy-id from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command(
                         "sshpass -p " + os.environ["ROOT_PW"] + "  ssh-copy-id  root@" + node1[
                             "nodeName"])
-                    logging.debug(stderr.readlines())
                     logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
 
                 connected = True
             except Exception as e:
@@ -401,8 +401,8 @@ def hostFileUpload(clusterNode):
             ssh.set_missing_host_key_policy(WarningPolicy())
             logging.debug('Current Dir: ' + os.getcwd())
             logging.debug('Connecting to Node: ' + clusterNode["nodeName"])
-            logging.debug('SSH IP: ' + clusterNode["externalIP"] + 'User: ' +
-                          os.environ["SSH_USERNAME"] + 'Key: ' +
+            logging.debug('SSH IP: ' + clusterNode["externalIP"] + ' User: ' +
+                          os.environ["SSH_USERNAME"] + ' Key: ' +
                           str(os.environ["CONFIGS_PATH"]) +
                           str(os.environ["SSH_KEY"]))
             ssh.connect(clusterNode["externalIP"], 22, os.environ["SSH_USERNAME"], None, pkey=None,
@@ -417,8 +417,8 @@ def hostFileUpload(clusterNode):
             logging.debug('Put Workers File')
 
             (stdin, stdout, stderr) = ssh.exec_command("sudo sh -c 'cat /tmp/hosts >> /etc/hosts'")
-            logging.debug(stderr.readlines())
             logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
             connected = True
         except Exception as e:
             # print e
@@ -457,8 +457,7 @@ def getNodeFQDN(clusterDictionary):
                 logging.debug(stdout.readlines())
                 logging.debug(stderr.readlines())
                 node["FQDN"] = fqdn.strip()
-
-            logging.debug('FQDN set')
+                logging.debug('FQDN set: ' + str(node["FQDN"]))
             connected = True
         except Exception as e:
             # print e
