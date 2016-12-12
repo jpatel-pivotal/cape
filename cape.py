@@ -2,6 +2,8 @@ import argparse
 import datetime
 import os
 import sys
+import logging
+import json
 
 from dotenv import load_dotenv
 
@@ -63,31 +65,34 @@ def cliParse():
     # Adding in type as an optinoal arg for now. to be used in the future
     parser_destroy.add_argument("--type", dest='type', action="store",
                                help="Type of cluster to be create (gpdb/hdb/vanilla", required=False)
-
+    logging.debug('Parsing Args')
     args = parser.parse_args()
 
     clusterDictionary = {}
 
     if (args.subparser_name == "create"):
-        clusterDictionary["clusterName"] = args.clustername
-        clusterDictionary["nodeQty"] = args.nodes
-        clusterDictionary["clusterType"] = "pivotal-" + args.type
-        clusterDictionary["segmentDBs"] = os.environ.get("SEGMENTDBS")
-        clusterDictionary["masterCount"] = 0
-        clusterDictionary["accessCount"] = 0
-        clusterDictionary["segmentCount"] = 0
+
         if (args.config):
             print "Loading Configuration"
             load_dotenv(args.config)
             os.environ["CONFIGS_PATH"] = os.path.dirname(args.config) + '/'
-
+            logging.debug('CONFIGS_PATH=' + os.environ["CONFIGS_PATH"])
+        clusterDictionary["clusterName"] = args.clustername
+        clusterDictionary["nodeQty"] = args.nodes
+        clusterDictionary["clusterType"] = "pivotal-" + args.type
+        clusterDictionary["segmentDBs"] = os.environ.get["SEGMENTDBS"]
+        clusterDictionary["masterCount"] = 0
+        clusterDictionary["accessCount"] = 0
+        clusterDictionary["segmentCount"] = 0
         if (args.type == "vanilla"):
             ClusterBuilder.buildServers(clusterDictionary)
         elif (args.type == "gpdb"):
             print clusterDictionary["clusterName"] + ": Creating a Greenplum Database Cluster"
-            ClusterBuilder.buildServers(clusterDictionary)
-            downloads = SoftwareDownload.downloadSoftware(clusterDictionary)
-            InstallGPDB.installGPDB(clusterDictionary, downloads)
+            logging.debug("Creating a Greenplum Database Cluster:" + clusterDictionary["clusterName"])
+            logging.debug('With Dictionary: ' + json.dumps(clusterDictionary))
+            #ClusterBuilder.buildServers(clusterDictionary)
+            #downloads = SoftwareDownload.downloadSoftware(clusterDictionary)
+            #InstallGPDB.installGPDB(clusterDictionary, downloads)
         elif (args.type == "hdb"):
             print "HDB Builder"
             ClusterBuilder.buildServers(clusterDictionary)
@@ -146,9 +151,19 @@ def cliParse():
 
 if __name__ == '__main__':
     startTime = datetime.datetime.today()
+    logging.basicConfig(filename='cape.log',level=logging.DEBUG, format='[%(asctime)s] %(module)s {%(pathname)s:%(funcName)s:%(lineno)d} %(levelname)s - %(message)s')
+    #ch = logging.StreamHandler(sys.stdout)
+    #ch.setLevel(logging.DEBUG)
+    #formatter = logging.Formatter('[%(asctime)s] %(module)s {%(pathname)s:%(funcName)s:%(lineno)d} %(levelname)s - %(message)s','%m-%d %H:%M:%S')
+    #ch.setFormatter(formatter)
+    #root.addHandler(ch)
     print  "Start Time: ", startTime
+    logging.info('Cape Started with Args:' + sys.argv[:])
     os.environ["CAPE_HOME"] = os.getcwd()
+    logging.debug('CAPE_HOME=' + os.environ["CAPE_HOME"])
     cliParse()
     stopTime = datetime.datetime.today()
     print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
+    logging.debug("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
     print  "Elapsed Time: ", stopTime - startTime
+    logging.info('Elapsed Time: ' + str(stopTime - startTime))
