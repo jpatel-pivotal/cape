@@ -53,7 +53,7 @@ def buildServers(clusterDictionary):
     logging.debug('SVC_ACCOUNT_KEY: ' + str(os.environ["SVC_ACCOUNT_KEY"]))
     logging.debug('PROJECT: ' + str(os.environ["PROJECT"]))
     logging.debug('DATACENTER: ' + str(os.environ["ZONE"]))
-    logging.debug('DISK_TYPE: ' + str(os.environ["DISK_TYPE"])
+    logging.debug('DISK_TYPE: ' + str(os.environ["DISK_TYPE"]))
     logging.debug('SERVER_TYPE: ' + str(os.environ["SERVER_TYPE"]))
 
     ComputeEngine = get_driver(Provider.GCE)
