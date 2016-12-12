@@ -373,7 +373,7 @@ def keyShare(clusterDictionary):
                 print traceback.print_exc()
                 print node["nodeName"] + ": Attempting SSH Connection"
                 time.sleep(3)
-                print ("attempt Count: " + attemptCount + "/40")
+                print ("attempt Count: " + str(attemptCount) + "/40")
                 if attemptCount > 40:
                     logging.debug('Exception: ' + str(e))
                     logging.debug(traceback.print_exc())
