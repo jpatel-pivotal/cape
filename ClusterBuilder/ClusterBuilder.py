@@ -321,8 +321,8 @@ def keyShare(clusterDictionary):
                 attemptCount += 1
                 ssh = paramiko.SSHClient()
                 ssh.set_missing_host_key_policy(AutoAddPolicy())
-                logging.debug('Connecting to Node: ' + str(clusterNode["nodeName"]))
-                logging.debug('SSH IP: ' + clusterNode["externalIP"] +
+                logging.debug('Connecting to Node: ' + str(node["nodeName"]))
+                logging.debug('SSH IP: ' + node["externalIP"] +
                               'User: gpadmin')
                 ssh.connect(node["externalIP"], 22, "gpadmin", password=str(os.environ["GPADMIN_PW"]), timeout=120)
                 logging.debug('Generating id_rsa')
@@ -334,18 +334,18 @@ def keyShare(clusterDictionary):
                 logging.debug(stderr.readlines())
                 logging.debug(stdout.readlines())
                 for node1 in clusterDictionary["clusterNodes"]:
-                    logging.debug("exchange key ssh from " + str(clusterNode["nodeName"]) + " to " + str(node1["nodeName"]))
+                    logging.debug("exchange key ssh from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["GPADMIN_PW"] + "  ssh gpadmin@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
                     logging.debug(stderr.readlines())
                     logging.debug(stdout.readlines())
-                    logging.debug("exchange key ssh-copy-id from " + str(clusterNode["nodeName"]) + " to " + str(node1["nodeName"]))
+                    logging.debug("exchange key ssh-copy-id from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["GPADMIN_PW"] + "  ssh-copy-id  gpadmin@" + node1["nodeName"])
                     logging.debug(stderr.readlines())
                     logging.debug(stdout.readlines())
 
                 ssh.close()
-                logging.debug('Connecting to Node: ' + str(clusterNode["nodeName"]))
-                logging.debug('SSH IP: ' + clusterNode["externalIP"] +
+                logging.debug('Connecting to Node: ' + str(node["nodeName"]))
+                logging.debug('SSH IP: ' + node["externalIP"] +
                               'User: root')
                 ssh.connect(node["externalIP"], 22, "root", password=str(os.environ["ROOT_PW"]),
                             timeout=120)
@@ -356,11 +356,11 @@ def keyShare(clusterDictionary):
                 logging.debug('Configure SSH settings')
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
-                    logging.debug("exchange key ssh from " + str(clusterNode["nodeName"]) + " to " + str(node1["nodeName"]))
+                    logging.debug("exchange key ssh from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["ROOT_PW"] + "  ssh root@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
                     logging.debug(stderr.readlines())
                     logging.debug(stdout.readlines())
-                    logging.debug("exchange key ssh-copy-id from " + str(clusterNode["nodeName"]) + " to " + str(node1["nodeName"]))
+                    logging.debug("exchange key ssh-copy-id from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command(
                         "sshpass -p " + os.environ["ROOT_PW"] + "  ssh-copy-id  root@" + node1[
                             "nodeName"])
