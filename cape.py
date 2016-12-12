@@ -158,7 +158,7 @@ if __name__ == '__main__':
     #ch.setFormatter(formatter)
     #root.addHandler(ch)
     print  "Start Time: ", startTime
-    logging.info('Cape Started with Args:' + sys.argv[:])
+    logging.info('Cape Started with Args:' + str(sys.argv[1:]))
     os.environ["CAPE_HOME"] = os.getcwd()
     logging.debug('CAPE_HOME=' + os.environ["CAPE_HOME"])
     cliParse()
