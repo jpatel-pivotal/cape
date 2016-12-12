@@ -5,6 +5,7 @@ import warnings
 import traceback
 import paramiko
 import logging
+import json
 from libcloud.compute.providers import get_driver
 from libcloud.compute.types import Provider
 from paramiko import WarningPolicy
@@ -47,7 +48,7 @@ def buildServers(clusterDictionary):
 
     clusterNodes = []
     logging.debug('Will create ' + str(clusterDictionary["nodeQty"]) +
-                  'Nodes with Info below:')
+                  ' Nodes with Info below:')
     logging.debug('SVC_ACCOUNT: ' + str(os.environ["SVC_ACCOUNT"]))
     logging.debug('CONFIGS_PATH: '+ str(os.environ["CONFIGS_PATH"]))
     logging.debug('SVC_ACCOUNT_KEY: ' + str(os.environ["SVC_ACCOUNT_KEY"]))
@@ -286,7 +287,7 @@ def hostsFiles(clusterDictionary):
     logging.debug('Wrote allhosts and workers file')
     threads = []
     for clusterNode in clusterDictionary["clusterNodes"]:
-        logging.debug('Starting uploadThread for: ' clusterNode)
+        logging.debug('Starting uploadThread for: ' + clusterNode)
         uploadThread = threading.Thread(target=hostFileUpload, args=(clusterNode,))
         threads.append(uploadThread)
         uploadThread.start()
