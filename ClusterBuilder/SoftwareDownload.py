@@ -11,7 +11,7 @@ from paramiko import WarningPolicy
 def downloadSoftware(clusterDictionary):
     warnings.simplefilter("ignore")
     package = clusterDictionary["clusterType"]
-    headers = {"Authorization": "Token " + os.environ.get("PIVNET_APIKEY")}
+    headers = {"Authorization": "Token " + os.environ["PIVNET_APIKEY"]}
 
     # FIND PRODUCT
     response = requests.get("https://network.pivotal.io/api/v2/products")
@@ -70,7 +70,7 @@ def downloadSoftware(clusterDictionary):
                         downloads.append(downloadFile)
             elif "Analytics" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
-                    if os.environ.get("MADLIB_VERSION") in file["name"]:  # NEED TO FIX THIS TO BE AUTOMATIC
+                    if os.environ["MADLIB_VERSION"] in file["name"]:  # NEED TO FIX THIS TO BE AUTOMATIC
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloadFile["TARGET"] = 2
@@ -142,14 +142,14 @@ def downloadSoftware(clusterDictionary):
 
                         ssh = paramiko.SSHClient()
                         ssh.set_missing_host_key_policy(WarningPolicy())
-                        ssh.connect(node["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None,
-                                    key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")),
+                        ssh.connect(node["externalIP"], 22, os.environ["SSH_USERNAME"], None, pkey=None,
+                                    key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]),
                                     timeout=120)
 
                         for file in downloads:
                             (stdin, stdout, stderr) = ssh.exec_command(
-                                "wget --header=\"Authorization: Token " + os.environ.get(
-                                    "PIVNET_APIKEY") + "\" --post-data='' " + str(
+                                "wget --header=\"Authorization: Token " + str(os.environ[
+                                    "PIVNET_APIKEY"]) + "\" --post-data='' " + str(
                                     file['URL']) + " -O /tmp/" + str(file['NAME']))
 
                             stderr.readlines()
@@ -182,29 +182,29 @@ def hostDownloads(node, downloads):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(node["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None,
-                        key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
+            ssh.connect(node["externalIP"], 22, os.environ["SSH_USERNAME"], None, pkey=None,
+                        key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]), timeout=120)
             for file in downloads:
                 if (file["TARGET"] == 2) and ("master" in node["role"]):
-                    (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ.get(
-                        "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
+                    (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ[
+                        "PIVNET_APIKEY"] + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
                     stderr.readlines()
                     stdout.readlines()
                 elif (file["TARGET"] == 1) and ("access" in node["role"]):
 
-                    (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ.get(
-                        "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
+                    (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ[
+                        "PIVNET_APIKEY"] + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
                     stderr.readlines()
                     stdout.readlines()
                 elif (file["TARGET"] == 3) and ("worker" in node["role"]):
 
-                    (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ.get(
-                        "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
+                    (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ[
+                        "PIVNET_APIKEY"] + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
                     stderr.readlines()
                     stdout.readlines()
                 elif (file["TARGET"] == 0):  # and ("access" not in node["role"]):  Decided to put GPDB on ACCESS
-                    (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ.get(
-                        "PIVNET_APIKEY") + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
+                    (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ[
+                        "PIVNET_APIKEY"] + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
                     stderr.readlines()
                     stdout.readlines()
 

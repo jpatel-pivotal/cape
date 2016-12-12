@@ -33,7 +33,7 @@ def buildServers(clusterDictionary):
     clusterNodes = []
 
     ComputeEngine = get_driver(Provider.GCE)
-    driver = ComputeEngine(os.environ.get("SVC_ACCOUNT"),str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SVC_ACCOUNT_KEY")),project=str(os.environ.get("PROJECT")), datacenter=str(os.environ.get("ZONE")))
+    driver = ComputeEngine(os.environ["SVC_ACCOUNT"], str(os.environ["CONFIGS_PATH"]) + str(os.environ["SVC_ACCOUNT_KEY"]), project=str(os.environ["PROJECT"]), datacenter=str(os.environ["ZONE"]))
     gce_disk_struct = [
         {
             "kind": "compute#attachedDisk",
@@ -41,11 +41,11 @@ def buildServers(clusterDictionary):
             "autoDelete": True,
 
             'initializeParams': {
-                "sourceImage": "/projects/centos-cloud/global/images/" + str(os.environ.get("IMAGE")),
+                "sourceImage": "/projects/centos-cloud/global/images/" + str(os.environ["IMAGE"]),
                 "diskSizeGb": 100,
-                "diskStorageType": str(os.environ.get("DISK_TYPE")),
-                "diskType": "/compute/v1/projects/" + str(os.environ.get("PROJECT")) + "/zones/" + str(
-                    os.environ.get("ZONE")) + "/diskTypes/" + str(os.environ.get("DISK_TYPE"))
+                "diskStorageType": str(os.environ["DISK_TYPE"]),
+                "diskType": "/compute/v1/projects/" + str(os.environ["PROJECT"]) + "/zones/" + str(
+                    os.environ["ZONE"]) + "/diskTypes/" + str(os.environ["DISK_TYPE"])
             },
         }
 
@@ -53,9 +53,9 @@ def buildServers(clusterDictionary):
     sa_scopes = [{'scopes': ['compute', 'storage-full']}]
     print clusterDictionary["clusterName"] + ": Creating " + str(clusterDictionary["nodeQty"]) + " Nodes"
     nodes = driver.ex_create_multiple_nodes(base_name=clusterDictionary["clusterName"],
-                                            size=str(os.environ.get("SERVER_TYPE")), image=None,
+                                            size=str(os.environ["SERVER_TYPE"]), image=None,
                                             number=int(clusterDictionary["nodeQty"]),
-                                            location=str(os.environ.get("ZONE")),
+                                            location=str(os.environ["ZONE"]),
                                             ex_network='default', ex_tags=None, ex_metadata=None, ignore_errors=True,
                                             use_existing_disk=False, poll_interval=2, external_ip='ephemeral',
                                             ex_service_accounts=None, timeout=180, description=None,
@@ -67,7 +67,7 @@ def buildServers(clusterDictionary):
     print clusterDictionary["clusterName"] + ": Cluster Configuration Started"
 
     threads = []
-    buildFSTAB(clusterDictionary, int(os.environ.get("DISK_QTY")))
+    buildFSTAB(clusterDictionary, int(os.environ["DISK_QTY"]))
     for nodeCnt in range(int(clusterDictionary["nodeQty"])):
         nodeName = clusterDictionary["clusterName"] + "-" + str(nodeCnt).zfill(3)
         clusterNode = {}
@@ -76,8 +76,8 @@ def buildServers(clusterDictionary):
         ####  MOUNTS SHOULD GO UNDER /DATA AND BE DATA1,DATA2,DATAN
         ####  THIS MEANS THE 1 DISK USE CASE SHOULD BE MOUNTED THE SAME WAY.
 
-        for diskNum in range(1,int(os.environ.get("DISK_QTY"))+1):
-            volume = driver.create_volume(os.environ.get("DISK_SIZE"), nodeName + "-data-disk-"+str(diskNum), None, None,
+        for diskNum in range(1,int(os.environ["DISK_QTY"])+1):
+            volume = driver.create_volume(os.environ["DISK_SIZE"], nodeName + "-data-disk-"+str(diskNum), None, None,
                                       None, False, "pd-standard")
 
             clusterNode["nodeName"] = nodeName
@@ -123,7 +123,7 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
     nodeName = clusterNode["nodeName"]
 
     # Set Server Role
-    if os.environ.get("STANDBY") == "yes" and os.environ.get("ACCESS") == "yes":
+    if os.environ["STANDBY"] == "yes" and os.environ["ACCESS"] == "yes":
         if (nodeCnt) == 0:
             clusterNode["role"] = "access"
             clusterDictionary["accessCount"] += 1
@@ -136,7 +136,7 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
         else:
             clusterNode["role"] = "worker"
             clusterDictionary["segmentCount"] += 1
-    elif os.environ.get("STANDBY") == "no" and os.environ.get("ACCESS") == "no":
+    elif os.environ["STANDBY"] == "no" and os.environ["ACCESS"] == "no":
         if (nodeCnt) == 0:
             clusterNode["role"] = "master1"
             clusterDictionary["masterCount"] += 1
@@ -151,8 +151,8 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None,
-                        key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
+            ssh.connect(clusterNode["externalIP"], 22, os.environ["SSH_USERNAME"], None, pkey=None,
+                        key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]), timeout=120)
             sftp = ssh.open_sftp()
             sftp.put('./templates/sysctl.conf.cape', '/tmp/sysctl.conf.cape', confirm=True)
             sftp.put('./clusterConfigs/' + clusterDictionary["clusterName"]+ '/fstab.cape', '/tmp/fstab.cape', confirm=True)
@@ -162,22 +162,22 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
             time.sleep(10)
 
 
-            (stdin, stdout, stderr) = ssh.exec_command("sudo echo " + os.environ.get("ROOT_PW") + " | sudo passwd --stdin root")
+            (stdin, stdout, stderr) = ssh.exec_command("sudo echo " + os.environ["ROOT_PW"] + " | sudo passwd --stdin root")
             stdout.readlines()
             stderr.readlines()
             ssh.exec_command("sudo chmod +x /tmp/prepareHost.sh")
-            (stdin, stdout, stderr) = ssh.exec_command("/tmp/prepareHost.sh " + os.environ.get("DISK_QTY") + " &> /tmp/prepareHost.log")
+            (stdin, stdout, stderr) = ssh.exec_command("/tmp/prepareHost.sh " + os.environ["DISK_QTY"] + " &> /tmp/prepareHost.log")
             stdout.readlines()
             stderr.readlines()
             (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir /data;sudo mount -a")
             stdout.readlines()
             stderr.readlines()
-            homeDir = os.environ.get("BASE_HOME") + "/home"
+            homeDir = os.environ["BASE_HOME"] + "/home"
             (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p " + homeDir + ";sudo useradd -b " + homeDir + " -s " + "/bin/bash -m gpadmin")
             stdout.readlines()
             stderr.readlines()
 
-            (stdin, stdout, stderr) = ssh.exec_command("sudo echo " + os.environ.get("GPADMIN_PW") + " | sudo passwd --stdin gpadmin")
+            (stdin, stdout, stderr) = ssh.exec_command("sudo echo " + os.environ["GPADMIN_PW"] + " | sudo passwd --stdin gpadmin")
             stdout.readlines()
             stderr.readlines()
 
@@ -254,7 +254,7 @@ def keyShare(clusterDictionary):
                 ssh = paramiko.SSHClient()
                 ssh.set_missing_host_key_policy(AutoAddPolicy())
 
-                ssh.connect(node["externalIP"], 22, "gpadmin", password=str(os.environ.get("GPADMIN_PW")), timeout=120)
+                ssh.connect(node["externalIP"], 22, "gpadmin", password=str(os.environ["GPADMIN_PW"]), timeout=120)
                 (stdin, stdout, stderr) = ssh.exec_command("echo -e  'y\n'|ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''")
                 #(stdin, stdout, stderr) = ssh.exec_command("sudo rm -f /etc/yum.repos.d/CentOS-SCL*;sudo yum clean all")
                 #stderr.readlines()
@@ -265,13 +265,13 @@ def keyShare(clusterDictionary):
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
                     # print("\t exchanging gpadmin key with " + str(node1["nodeName"]))
-                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh gpadmin@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
-                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("GPADMIN_PW") + "  ssh-copy-id  gpadmin@" + node1["nodeName"])
+                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["GPADMIN_PW"] + "  ssh gpadmin@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
+                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["GPADMIN_PW"] + "  ssh-copy-id  gpadmin@" + node1["nodeName"])
                     stderr.readlines()
                     stdout.readlines()
 
                 ssh.close()
-                ssh.connect(node["externalIP"], 22, "root", password=str(os.environ.get("ROOT_PW")),
+                ssh.connect(node["externalIP"], 22, "root", password=str(os.environ["ROOT_PW"]),
                             timeout=120)
                 (stdin, stdout, stderr) = ssh.exec_command("echo -e  'y\n'|ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''")
                 stderr.readlines()
@@ -279,9 +279,9 @@ def keyShare(clusterDictionary):
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
                     # print("\t exchanging root key with " + str(node1["nodeName"]))
-                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ.get("ROOT_PW") + "  ssh root@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
+                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["ROOT_PW"] + "  ssh root@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
                     (stdin, stdout, stderr) = ssh.exec_command(
-                        "sshpass -p " + os.environ.get("ROOT_PW") + "  ssh-copy-id  root@" + node1[
+                        "sshpass -p " + os.environ["ROOT_PW"] + "  ssh-copy-id  root@" + node1[
                             "nodeName"])
                     stderr.readlines()
                     stdout.readlines()
@@ -312,8 +312,8 @@ def hostFileUpload(clusterNode):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None,
-                        key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
+            ssh.connect(clusterNode["externalIP"], 22, os.environ["SSH_USERNAME"], None, pkey=None,
+                        key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]), timeout=120)
 
             sftp = ssh.open_sftp()
             sftp.put("hosts", "/tmp/hosts")
@@ -346,7 +346,7 @@ def getNodeFQDN(clusterDictionary):
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
             for node in clusterDictionary["clusterNodes"]:
-                ssh.connect(node["externalIP"], 22, "gpadmin", password=str(os.environ.get("GPADMIN_PW")), timeout=120)
+                ssh.connect(node["externalIP"], 22, "gpadmin", password=str(os.environ["GPADMIN_PW"]), timeout=120)
                 (stdin, stdout, stderr) = ssh.exec_command("hostname -f ")
                 fqdn = stdout.read()
                 stdout.readlines()

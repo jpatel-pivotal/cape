@@ -111,7 +111,7 @@ def installComponents(masterNode, downloads):
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
 
-            ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
+            ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
             (stdin, stdout, stderr) = ssh.exec_command("createlang plpythonu -d template1")
             stdout.readlines()
             stderr.readlines()
@@ -159,7 +159,7 @@ def verifyInstall(masterNode, clusterDictionary):
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
 
-            ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
+            ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
             (stdin, stdout, stderr) = ssh.exec_command(
                 "psql -c \"SELECT version() ;\"")
             return_code = stdout.channel.recv_exit_status()
@@ -227,7 +227,7 @@ def installDSPackages(clusterNode):
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
 
-            ssh.connect(clusterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
+            ssh.connect(clusterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
 
             # FIX FOR GENSIM
             (stdin, stdout, stderr) = ssh.exec_command("echo -e 'import sys\nsys.setdefaultencoding(\"utf-8\")' >> /usr/local/greenplum-db-4.3.9.1/ext/python/lib/python2.6/site-packages/sitecustomize.py")
@@ -290,7 +290,7 @@ def setPaths(clusterNode):
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
 
-            ssh.connect(clusterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
+            ssh.connect(clusterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
 
             (stdin, stdout, stderr) = ssh.exec_command(
                 "echo 'source /usr/local/greenplum-db/greenplum_path.sh\n' >> ~/.bashrc")
@@ -324,8 +324,8 @@ def makeDirectories(clusterNode):
 
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(clusterNode["externalIP"], 22, str(os.environ.get("SSH_USERNAME")), None, pkey=None,
-                        key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")),
+            ssh.connect(clusterNode["externalIP"], 22, str(os.environ["SSH_USERNAME"]), None, pkey=None,
+                        key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]),
                         timeout=120)
             if "master" in clusterNode["role"]:
                 (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/disk1/master")
@@ -333,8 +333,8 @@ def makeDirectories(clusterNode):
                 stderr.readlines()
             else:
 
-                numDisks = os.environ.get("DISK_QTY")
-                segDBs = os.environ.get("SEGMENTDBS")
+                numDisks = os.environ["DISK_QTY"]
+                segDBs = os.environ["SEGMENTDBS"]
                 for diskNum in range(1, int(numDisks) + 1):
                     (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/disk"+str(diskNum)+"/primary")
                     stdout.readlines()
@@ -365,9 +365,9 @@ def setGPADMINPW(masterNode):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
+            ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
             (stdin, stdout, stderr) = ssh.exec_command(
-                "psql -c \"alter user gpadmin with password '" + str(os.environ.get("GPADMIN_PW")) + "';\"")
+                "psql -c \"alter user gpadmin with password '" + str(os.environ["GPADMIN_PW"]) + "';\"")
 
             # (stdin, stdout, stderr) = ssh.exec_command("alter user gpadmin with password '"+str(os.environ.get("GPADMIN_PW"))+ "';")
             stdout.readlines()
@@ -394,7 +394,7 @@ def modifyPHGBA(masterNode):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
+            ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
             (stdin, stdout, stderr) = ssh.exec_command(
                 "echo 'host all gpadmin " + accessNode['internalIP'] + "/0 md5' >> /data/master/gpseg-1/pg_hba.conf")
             stdout.readlines()
@@ -424,8 +424,8 @@ def uncompressFiles(clusterNode, downloads):
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
 
-            ssh.connect(clusterNode["externalIP"], 22, str(os.environ.get("SSH_USERNAME")), None, pkey=None,
-                        key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
+            ssh.connect(clusterNode["externalIP"], 22, str(os.environ["SSH_USERNAME"]), None, pkey=None,
+                        key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]), timeout=120)
 
             for file in downloads:
                 if ".zip" in file["NAME"]:
@@ -457,8 +457,8 @@ def prepFiles(clusterNode):
 
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(clusterNode["externalIP"], 22, str(os.environ.get("SSH_USERNAME")), None, pkey=None,
-                        key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")), timeout=120)
+            ssh.connect(clusterNode["externalIP"], 22, str(os.environ["SSH_USERNAME"]), None, pkey=None,
+                        key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]), timeout=120)
 
             (stdin, stdout, stderr) = ssh.exec_command("sudo sed -i 's/more <</cat <</g' /tmp/greenplum-db*.bin")
             stdout.readlines()
@@ -496,8 +496,8 @@ def installBits(clusterNode):
 
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(clusterNode["externalIP"], 22, str(os.environ.get("SSH_USERNAME")), None, pkey=None,
-                        key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")),
+            ssh.connect(clusterNode["externalIP"], 22, str(os.environ["SSH_USERNAME"]), None, pkey=None,
+                        key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]),
                         timeout=120)
 
             (stdin, stdout, stderr) = ssh.exec_command("sudo /tmp/greenplum-db*.bin")
@@ -529,9 +529,9 @@ def initDB(clusterNode, clusterName):
 
     ## BUILD DATA DIRECTORY AND MIRROR DIRECTORY
     # SHOULD BE #SEGDB ENTRIES ACROSS # DRIVES.
-    numDisks = os.environ.get("DISK_QTY")
-    segDBs = os.environ.get("SEGMENTDBS")
-    diskBase = os.environ.get("BASE_HOME")
+    numDisks = os.environ["DISK_QTY"]
+    segDBs = os.environ["SEGMENTDBS"]
+    diskBase = os.environ["BASE_HOME"]
     dataDirectories = ""
     mirrorDirectories = ""
 
@@ -550,14 +550,14 @@ def initDB(clusterNode, clusterName):
                 str(diskNum)+"/mirror "
 
 
-    with open(str(os.environ.get("CAPE_HOME"))+"/templates/gpinitsystem_config.template", 'r+') as gpConfigTemplate:
+    with open(str(os.environ["CAPE_HOME"])+"/templates/gpinitsystem_config.template", 'r+') as gpConfigTemplate:
         gpConfigTemplateData = gpConfigTemplate.read()
         gpConfigTemplateModData = gpConfigTemplateData.replace("%MASTER%", clusterNode["nodeName"])
         gpConfigDirectoriesData = gpConfigTemplateModData.replace("declare -a DATA_DIRECTORY=(/data/primary /data/primary)","declare -a DATA_DIRECTORY=("+dataDirectories+")")
         gpConfigTemplateData  = gpConfigDirectoriesData.replace("declare -a MIRROR_DATA_DIRECTORY=(/data/mirror /data/mirror)","declare -a MIRROR_DATA_DIRECTORY=("+mirrorDirectories+")")
 
 
-    with open(os.environ.get("CAPE_HOME") + "/clusterConfigs/" + str(clusterName) + "/gpinitsystem_config",
+    with open(os.environ["CAPE_HOME"] + "/clusterConfigs/" + str(clusterName) + "/gpinitsystem_config",
               'w') as gpConfigCluster:
         gpConfigCluster.write(gpConfigTemplateData)
 
@@ -568,8 +568,8 @@ def initDB(clusterNode, clusterName):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(clusterNode["externalIP"], 22, os.environ.get("SSH_USERNAME"), None, pkey=None,
-                        key_filename=str(os.environ.get("CONFIGS_PATH")) + str(os.environ.get("SSH_KEY")),
+            ssh.connect(clusterNode["externalIP"], 22, os.environ["SSH_USERNAME"], None, pkey=None,
+                        key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]),
                         timeout=120)
             sftp = ssh.open_sftp()
             sftp.put("gpinitsystem_config", "/tmp/gpinitsystem_config.cape")
@@ -592,7 +592,7 @@ def initDB(clusterNode, clusterName):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            ssh.connect(clusterNode["externalIP"], 22, "gpadmin", str(os.environ.get("GPADMIN_PW")), timeout=120)
+            ssh.connect(clusterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
             #
             # Adding gpssh-exkeys here for now
             # We need to figure out the key exchange and then remove this step

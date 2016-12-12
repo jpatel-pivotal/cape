@@ -80,7 +80,7 @@ def cliParse():
         clusterDictionary["clusterName"] = args.clustername
         clusterDictionary["nodeQty"] = args.nodes
         clusterDictionary["clusterType"] = "pivotal-" + args.type
-        clusterDictionary["segmentDBs"] = os.environ.get["SEGMENTDBS"]
+        clusterDictionary["segmentDBs"] = os.environ["SEGMENTDBS"]
         clusterDictionary["masterCount"] = 0
         clusterDictionary["accessCount"] = 0
         clusterDictionary["segmentCount"] = 0
