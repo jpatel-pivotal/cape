@@ -455,7 +455,7 @@ def getNodeFQDN(clusterDictionary):
                 (stdin, stdout, stderr) = ssh.exec_command("hostname -f ")
                 fqdn = stdout.read()
                 logging.debug(stdout.readlines())
-                logigng.debug(stderr.readlines())
+                logging.debug(stderr.readlines())
                 node["FQDN"] = fqdn.strip()
 
             logging.debug('FQDN set')
