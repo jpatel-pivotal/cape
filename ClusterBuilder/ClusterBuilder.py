@@ -130,6 +130,7 @@ def buildServers(clusterDictionary):
     clusterDictionary["clusterNodes"] = clusterNodes
     logging.debug('ClusterNodes: ' + json.dumps(clusterDictionary["clusterNodes"]))
     getNodeFQDN(clusterDictionary)
+    logging.debug(json.dumps(clusterDictionary))
     hostsFiles(clusterDictionary)
     keyShare(clusterDictionary)
     logging.debug('buildServers Completed')
@@ -185,7 +186,6 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
             clusterNode["role"] = "worker"
             clusterDictionary["segmentCount"] += 1
     logging.debug('Role set')
-    logging.debug(json.dumps(clusterDictionary))
 
     connected = False
     attemptCount = 0
@@ -473,5 +473,4 @@ def getNodeFQDN(clusterDictionary):
                 exit()
         finally:
             ssh.close()
-            logging.debug(+ json.dumps(clusterDictionary))
             logging.debug('getNodeFQDN Completed')
