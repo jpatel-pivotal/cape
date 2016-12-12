@@ -13,9 +13,9 @@ from paramiko import AutoAddPolicy
 
 
 logging.basicConfig(filename='cape.log', level=logging.DEBUG,
-                    format='[%(asctime)s] %(module)s \
-                    {%(pathname)s:%(funcName)s:%(lineno)d} %(levelname)s -\
-                     %(message)s')
+                    format='[%(asctime)s] %(pathname)s \
+                    {%(module)s:%(funcName)s:%(lineno)d} %(levelname)s \
+                    %(threadName)s - %(message)s')
 
 
 def buildServers(clusterDictionary):
@@ -128,7 +128,7 @@ def buildServers(clusterDictionary):
     print clusterDictionary["clusterName"] + ": Cluster Configuration Complete"
     logging.info(clusterDictionary["clusterName"] + ": Cluster Configuration Complete")
     clusterDictionary["clusterNodes"] = clusterNodes
-    logging.debug('ClusterNodes: ' + + json.dumps(clusterDictionary["clusterNodes"]))
+    logging.debug('ClusterNodes: ' + json.dumps(clusterDictionary["clusterNodes"]))
     getNodeFQDN(clusterDictionary)
     hostsFiles(clusterDictionary)
     keyShare(clusterDictionary)
@@ -242,7 +242,7 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
             print clusterNode["nodeName"]+": Rebooting"
             logging.debug(clusterNode["nodeName"] + ': Rebooting')
             (stdin, stdout, stderr) = ssh.exec_command("sudo reboot")
-            logigng.debug(stdout.readlines())
+            logging.debug(stdout.readlines())
             logging.debug(stderr.readlines())
             connected = True
         except Exception as e:
