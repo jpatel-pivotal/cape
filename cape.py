@@ -34,7 +34,7 @@ def cliParse():
 
     parser_create.add_argument("-v", dest='verbose', action='store_true', required=False)
 
-    parser_create.add_argument("--config", dest='config', default='./configs/config.env', action="store", help="Config.env file",
+    parser_create.add_argument("--config", dest='config', default=str(os.getcwd())+'/configs/config.env', action="store", help="Config.env file",
                                required=False)
 
     #parser_create.add_argument("-l", dest='lab', action='store_true', required=False,
@@ -46,7 +46,7 @@ def cliParse():
                               required=True)
     parser_query.add_argument("--nodes", dest='nodes', default=1, action="store", help="Number of Nodes to be Queried",
                                required=True)
-    parser_query.add_argument("--config", dest='config', default='./configs/config.env', action="store", help="Config.env file",
+    parser_query.add_argument("--config", dest='config', default=str(os.getcwd())+'/configs/config.env', action="store", help="Config.env file",
                                required=False)
     # Adding in type as an optinoal arg for now. to be used in the future
     parser_query.add_argument("--type", dest='type', action="store",
@@ -58,7 +58,7 @@ def cliParse():
 
     parser_destroy.add_argument("--name", dest='clustername', action="store",help="Name of Cluster to be Deleted",required=True)
 
-    parser_destroy.add_argument("--config", dest='config', default='./configs/config.env', action="store", help="Config.env file",
+    parser_destroy.add_argument("--config", dest='config', default=str(os.getcwd())+'/configs/config.env', action="store", help="Config.env file",
                                required=False)
     parser_destroy.add_argument("--nodes", dest='nodes', default=1, action="store", help="Number of Nodes to be Created",
                                required=True)
