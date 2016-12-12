@@ -184,7 +184,7 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
         else:
             clusterNode["role"] = "worker"
             clusterDictionary["segmentCount"] += 1
-    logging.debug('Roles set')
+    logging.debug('Role set')
     logging.debug(json.dumps(clusterDictionary))
 
     connected = False
