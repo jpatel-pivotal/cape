@@ -77,6 +77,8 @@ def cliParse():
             load_dotenv(args.config)
             os.environ["CONFIGS_PATH"] = os.path.dirname(args.config) + '/'
             logging.debug('CONFIGS_PATH=' + os.environ["CONFIGS_PATH"])
+            for key in os.environ.keys():
+                logging.debug(key + '=' + str(os.environ[key]))
         clusterDictionary["clusterName"] = args.clustername
         clusterDictionary["nodeQty"] = args.nodes
         clusterDictionary["clusterType"] = "pivotal-" + args.type
