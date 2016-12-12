@@ -201,7 +201,7 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
                           str(os.environ["CONFIGS_PATH"]) +
                           str(os.environ["SSH_KEY"]))
             ssh.connect(clusterNode["externalIP"], 22, os.environ["SSH_USERNAME"], None, pkey=None,
-                        key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]), timeout=120)
+                        key_filename=(str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"])), timeout=120)
             sftp = ssh.open_sftp()
             sftp.put('./templates/sysctl.conf.cape', '/tmp/sysctl.conf.cape', confirm=True)
             logging.debug('Put: ./templates/sysctl.conf.cape')
@@ -406,7 +406,7 @@ def hostFileUpload(clusterNode):
                           str(os.environ["CONFIGS_PATH"]) +
                           str(os.environ["SSH_KEY"]))
             ssh.connect(clusterNode["externalIP"], 22, os.environ["SSH_USERNAME"], None, pkey=None,
-                        key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]), timeout=120)
+                        key_filename=(str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"])), timeout=120)
 
             sftp = ssh.open_sftp()
             sftp.put("hosts", "/tmp/hosts", confirm=True)
