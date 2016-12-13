@@ -36,7 +36,7 @@ def cliParse():
 
     parser_create.add_argument("--config", dest='config', default=str(os.getcwd())+'/configs/config.env', action="store", help="Config.env file",
                                required=False)
-    parser_create.add_argument("--log", dest='logfile', default=str(os.getcwd())+'cape.log', action="store", help="Location of cape log file",
+    parser_create.add_argument("--log", dest='logfile', default=str(os.getcwd())+'/cape.log', action="store", help="Location of cape log file",
                                required=False)
     parser_create.add_argument("--loglevel", dest='loglevel', default='DEBUG', action="store", help="Logging level of cape log file",
                                required=False)
@@ -54,7 +54,7 @@ def cliParse():
     # Adding in type as an optinoal arg for now. to be used in the future
     parser_query.add_argument("--type", dest='type', action="store",
                                help="Type of cluster to be create (gpdb/hdb/vanilla", required=False)
-    parser_query.add_argument("--log", dest='logfile', default=str(os.getcwd())+'cape.log', action="store", help="Location of cape log file",
+    parser_query.add_argument("--log", dest='logfile', default=str(os.getcwd())+'/cape.log', action="store", help="Location of cape log file",
                                required=False)
     parser_query.add_argument("--loglevel", dest='loglevel', default='DEBUG', action="store", help="Logging level of cape log file",
                                required=False)
@@ -72,7 +72,7 @@ def cliParse():
     # Adding in type as an optinoal arg for now. to be used in the future
     parser_destroy.add_argument("--type", dest='type', action="store",
                                help="Type of cluster to be create (gpdb/hdb/vanilla", required=False)
-    parser_destroy.add_argument("--log", dest='logfile', default=str(os.getcwd())+'cape.log', action="store", help="Location of cape log file",
+    parser_destroy.add_argument("--log", dest='logfile', default=str(os.getcwd())+'/cape.log', action="store", help="Location of cape log file",
                                required=False)
     parser_destroy.add_argument("--loglevel", dest='loglevel', default='DEBUG', action="store", help="Logging level of cape log file",
                                required=False)
