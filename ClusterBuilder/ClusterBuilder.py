@@ -334,6 +334,8 @@ def keyShare(clusterDictionary):
                 logging.debug(stdout.readlines())
                 logging.debug(stderr.readlines())
                 for node1 in clusterDictionary["clusterNodes"]:
+                    if '000' in node1["nodeName"]:
+                            break
                     logging.debug("exchange key ssh from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["GPADMIN_PW"] + "  ssh gpadmin@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
                     logging.debug(stdout.readlines())
@@ -356,6 +358,8 @@ def keyShare(clusterDictionary):
                 logging.debug('Configure SSH settings')
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
+                    if '000' in node1["nodeName"]:
+                            break
                     logging.debug("exchange key ssh from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["ROOT_PW"] + "  ssh root@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
                     logging.debug(stdout.readlines())
