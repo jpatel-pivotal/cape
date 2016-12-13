@@ -134,7 +134,7 @@ def buildServers(clusterDictionary):
 
 def buildFSTAB(clusterDictionary,diskCNT):
     logging.debug('buildFSTAB Started')
-    clusterPath = "./clusterConfigs/" + clusterDictionary["clusterName"]
+    clusterPath = str(os.environ["CAPE_HOME"]) + "/clusterConfigs/" + clusterDictionary["clusterName"]
     currentPath = os.getcwd()
     logging.debug('Current Dir: ' + currentPath)
     os.chdir(clusterPath)
@@ -260,7 +260,7 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
 
 def hostsFiles(clusterDictionary):
     logging.debug('hostFiles Started')
-    clusterPath = "./clusterConfigs/" + clusterDictionary["clusterName"]
+    clusterPath = str(os.environ["CAPE_HOME"]) + "/clusterConfigs/" + clusterDictionary["clusterName"]
     os.chdir(clusterPath)
     logging.debug('Changed Dir to: ' + os.getcwd())
     with open("hosts", "w") as hostsFile:
