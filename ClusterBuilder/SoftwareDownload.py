@@ -3,15 +3,20 @@ import os
 import threading
 import time
 import warnings
-
+import logging
 import paramiko
 import requests
+import traceback
 from paramiko import WarningPolicy
 
 def downloadSoftware(clusterDictionary):
+    logging.info('downloadSoftware Started')
     warnings.simplefilter("ignore")
+    logging.debug('SimpleFilter for Warnings: ignore')
     package = clusterDictionary["clusterType"]
+    logging.debug('Package to Download: ' + package)
     headers = {"Authorization": "Token " + os.environ["PIVNET_APIKEY"]}
+    logging.debug('Auth Token: ' + json.dumps(headers))
 
     # FIND PRODUCT
     response = requests.get("https://network.pivotal.io/api/v2/products")
@@ -19,7 +24,9 @@ def downloadSoftware(clusterDictionary):
     for product in res["products"]:
         if package in product["slug"]:
             releasesURL = product["_links"]["releases"].get("href")
+            logging.debug('Release URL: ' + releasesURL)
             productId = product["id"]
+            logging.debug('ProdID: ' + str(productId))
     response = requests.get(releasesURL)
     res = json.loads(response.text)
     # GET LATEST RELEASE
@@ -33,6 +40,7 @@ def downloadSoftware(clusterDictionary):
             # # GET DOWNLOAD URL AND FILENAME
 
     getURL = "https://network.pivotal.io/api/v2/products/" + package + "/releases/" + str(latestVersion["id"])
+    logging.debug('latestVersion URL: ' + getURL)
     response = requests.get(getURL, headers=headers)
     responseJSON = json.loads(response.text)
     downloads = []
@@ -161,10 +169,15 @@ def downloadSoftware(clusterDictionary):
                         print node["nodeName"] + ": Attempting SSH Connection"
                         time.sleep(3)
                         if attemptCount > 1:
+                            logging.debug('Exception: ' + str(e))
+                            logging.debug(traceback.print_exc())
+                            logging.debug('Failed')
                             print "Failing Process"
                             exit()
                     finally:
                         ssh.close()
+
+    logging.info('downloadSoftware Completed')
     return downloads
 
 
@@ -175,6 +188,7 @@ def downloadSoftware(clusterDictionary):
 #   3 : DATANODES OR SEGMENT DB HOST
 
 def hostDownloads(node, downloads):
+    logging.info('hostDownloads Started')
     connected = False
     attemptCount = 0
     while not connected:
@@ -182,31 +196,36 @@ def hostDownloads(node, downloads):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
+            logging.debug('Connecting to Node: ' + node["nodeName"])
+            logging.debug('SSH IP: ' + node["externalIP"] + ' User: ' +
+                          os.environ["SSH_USERNAME"] + ' Key: ' +
+                          str(os.environ["CONFIGS_PATH"]) +
+                          str(os.environ["SSH_KEY"]))
             ssh.connect(node["externalIP"], 22, os.environ["SSH_USERNAME"], None, pkey=None,
                         key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]), timeout=120)
             for file in downloads:
                 if (file["TARGET"] == 2) and ("master" in node["role"]):
                     (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ[
                         "PIVNET_APIKEY"] + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
-                    stderr.readlines()
-                    stdout.readlines()
+                    logging.debug(stderr.readlines())
+                    logging.debug(stdout.readlines())
                 elif (file["TARGET"] == 1) and ("access" in node["role"]):
 
                     (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ[
                         "PIVNET_APIKEY"] + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
-                    stderr.readlines()
-                    stdout.readlines()
+                    logging.debug(stderr.readlines())
+                    logging.debug(stdout.readlines())
                 elif (file["TARGET"] == 3) and ("worker" in node["role"]):
 
                     (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ[
                         "PIVNET_APIKEY"] + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
-                    stderr.readlines()
-                    stdout.readlines()
+                    logging.debug(stderr.readlines())
+                    logging.debug(stdout.readlines())
                 elif (file["TARGET"] == 0):  # and ("access" not in node["role"]):  Decided to put GPDB on ACCESS
                     (stdin, stdout, stderr) = ssh.exec_command("wget --header=\"Authorization: Token " + os.environ[
                         "PIVNET_APIKEY"] + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
-                    stderr.readlines()
-                    stdout.readlines()
+                    logging.debug(stderr.readlines())
+                    logging.debug(stdout.readlines())
 
             connected = True
         except Exception as e:
@@ -214,7 +233,11 @@ def hostDownloads(node, downloads):
             print node["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 1:
+                logging.debug('Exception: ' + str(e))
+                logging.debug(traceback.print_exc())
+                logging.debug('Failed')
                 print "Failing Process"
                 exit()
         finally:
             ssh.close()
+            logging.info('hostDownloads Completed')
