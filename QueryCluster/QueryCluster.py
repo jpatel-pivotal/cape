@@ -15,13 +15,13 @@ def checkServerState(clusterDictionary):
     print clusterDictionary["clusterName"] + ": Querying Cluster State Started"
     try:
         ComputeEngine = get_driver(Provider.GCE)
-        driver = ComputeEngine(os.environ.get("SVC_ACCOUNT"),
-                               str(os.environ.get("CONFIGS_PATH")) +
-                               str(os.environ.get("SVC_ACCOUNT_KEY")),
-                               project=str(os.environ.get("PROJECT")),
-                               datacenter=str(os.environ.get("ZONE")))
+        driver = ComputeEngine(os.environ["SVC_ACCOUNT"],
+                               str(os.environ["CONFIGS_PATH"]) +
+                               str(os.environ["SVC_ACCOUNT_KEY"]),
+                               project=str(os.environ["PROJECT"]),
+                               datacenter=str(os.environ["ZONE"]))
 
-        nodes = driver.list_nodes(ex_zone=str(os.environ.get("ZONE")))
+        nodes = driver.list_nodes(ex_zone=str(os.environ["ZONE"]))
         if not nodes:
             print "Did not find any nodes for that cluster!"
         else:
