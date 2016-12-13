@@ -8,6 +8,7 @@ import paramiko
 import requests
 import traceback
 from paramiko import WarningPolicy
+from distutils.version import StrictVersion
 
 def downloadSoftware(clusterDictionary):
     logging.info('downloadSoftware Started')
@@ -76,13 +77,15 @@ def downloadSoftware(clusterDictionary):
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloadFile["TARGET"] = 0
                         downloads.append(downloadFile)
-            elif "Analytics" in fileInfo["name"]:
+            elif "MADlib" in fileInfo["name"]:
+                latestVersion = "0.0"
                 for file in fileInfo["product_files"]:
-                    if os.environ["MADLIB_VERSION"] in file["name"]:  # NEED TO FIX THIS TO BE AUTOMATIC
+                    if StrictVersion(str(file["file_version"])) > latestVersion:
+                        latestVersion = str(file["file_version"])
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloadFile["TARGET"] = 2
-                        downloads.append(downloadFile)
+                downloads.append(downloadFile)
             elif "Language extensions" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     if "PL/R Extension for RHEL" in file["name"]:
