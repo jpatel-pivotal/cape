@@ -13,7 +13,7 @@ from LabBuilder import StudentAccounts
 
 def installGPDB(clusterDictionary, downloads):
     print clusterDictionary["clusterName"] + ": Installing Greenplum Database on Cluster"
-    logging.debug('Installing GPDB with Dictionary: ' + json.dumps(clusterDictionary)))
+    logging.debug('Installing GPDB with Dictionary: ' + json.dumps(clusterDictionary))
     threads = []
     masterNode = {}
     accessNode = {}
