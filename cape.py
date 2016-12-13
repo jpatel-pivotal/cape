@@ -2,6 +2,8 @@ import argparse
 import datetime
 import os
 import sys
+import logging
+import json
 
 from dotenv import load_dotenv
 
@@ -34,7 +36,10 @@ def cliParse():
 
     parser_create.add_argument("--config", dest='config', default=str(os.getcwd())+'/configs/config.env', action="store", help="Config.env file",
                                required=False)
-
+    parser_create.add_argument("--log", dest='logfile', default=str(os.getcwd())+'/cape.log', action="store", help="Location of cape log file",
+                               required=False)
+    parser_create.add_argument("--loglevel", dest='loglevel', default='DEBUG', action="store", help="Logging level of cape log file",
+                               required=False)
     #parser_create.add_argument("-l", dest='lab', action='store_true', required=False,
     #                         help="Include Lab creation in Cluster Buildout")
 
@@ -49,6 +54,10 @@ def cliParse():
     # Adding in type as an optinoal arg for now. to be used in the future
     parser_query.add_argument("--type", dest='type', action="store",
                                help="Type of cluster to be create (gpdb/hdb/vanilla", required=False)
+    parser_query.add_argument("--log", dest='logfile', default=str(os.getcwd())+'/cape.log', action="store", help="Location of cape log file",
+                               required=False)
+    parser_query.add_argument("--loglevel", dest='loglevel', default='DEBUG', action="store", help="Logging level of cape log file",
+                               required=False)
     parser_gpdb.add_argument("--clustername", dest='clustername', action="store", help="Name of Cluster to be Staged",
                              required=True)
 
@@ -63,31 +72,50 @@ def cliParse():
     # Adding in type as an optinoal arg for now. to be used in the future
     parser_destroy.add_argument("--type", dest='type', action="store",
                                help="Type of cluster to be create (gpdb/hdb/vanilla", required=False)
-
+    parser_destroy.add_argument("--log", dest='logfile', default=str(os.getcwd())+'/cape.log', action="store", help="Location of cape log file",
+                               required=False)
+    parser_destroy.add_argument("--loglevel", dest='loglevel', default='DEBUG', action="store", help="Logging level of cape log file",
+                               required=False)
     args = parser.parse_args()
 
     clusterDictionary = {}
 
+    startTime = datetime.datetime.today()
+    logging.basicConfig(filename=args.logfile,level=args.loglevel, format='[%(asctime)s] %(pathname)s {%(module)s:%(funcName)s:%(lineno)d} %(levelname)s %(threadName)s - %(message)s')
+    print  "Start Time: ", startTime
+    logging.info('Cape Started with Args:' + str(sys.argv[1:]))
+    logging.debug('CAPE_HOME=' + os.environ["CAPE_HOME"])
+
     if (args.subparser_name == "create"):
-        clusterDictionary["clusterName"] = args.clustername
-        clusterDictionary["nodeQty"] = args.nodes
-        clusterDictionary["clusterType"] = "pivotal-" + args.type
-        clusterDictionary["segmentDBs"] = os.environ.get("SEGMENTDBS")
-        clusterDictionary["masterCount"] = 0
-        clusterDictionary["accessCount"] = 0
-        clusterDictionary["segmentCount"] = 0
+
         if (args.config):
             print "Loading Configuration"
             load_dotenv(args.config)
             os.environ["CONFIGS_PATH"] = os.path.dirname(args.config) + '/'
-
+            logging.debug('CONFIGS_PATH=' + os.environ["CONFIGS_PATH"])
+            for key in os.environ.keys():
+                logging.debug(key + '=' + str(os.environ[key]))
+        clusterDictionary["clusterName"] = args.clustername
+        clusterDictionary["nodeQty"] = args.nodes
+        clusterDictionary["clusterType"] = "pivotal-" + args.type
+        clusterDictionary["segmentDBs"] = os.environ["SEGMENTDBS"]
+        clusterDictionary["masterCount"] = 0
+        clusterDictionary["accessCount"] = 0
+        clusterDictionary["segmentCount"] = 0
         if (args.type == "vanilla"):
             ClusterBuilder.buildServers(clusterDictionary)
         elif (args.type == "gpdb"):
             print clusterDictionary["clusterName"] + ": Creating a Greenplum Database Cluster"
+            logging.debug("Creating a Greenplum Database Cluster:" + clusterDictionary["clusterName"])
+            logging.debug('With Dictionary: ' + json.dumps(clusterDictionary))
             ClusterBuilder.buildServers(clusterDictionary)
             downloads = SoftwareDownload.downloadSoftware(clusterDictionary)
             InstallGPDB.installGPDB(clusterDictionary, downloads)
+            stopTime = datetime.datetime.today()
+            print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
+            logging.debug("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
+            print  "Elapsed Time: ", stopTime - startTime
+            logging.info('Elapsed Time: ' + str(stopTime - startTime))
         elif (args.type == "hdb"):
             print "HDB Builder"
             ClusterBuilder.buildServers(clusterDictionary)
@@ -124,6 +152,11 @@ def cliParse():
             #     with open("./" + clusterName + "/clusterInfo.json") as clusterInfoFile:
             #         clusterInfo = json.load(clusterInfoFile)
             #     Users.gpControl(clusterInfo,args.action)
+            stopTime = datetime.datetime.today()
+            print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
+            logging.debug("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
+            print  "Elapsed Time: ", stopTime - startTime
+            logging.info('Elapsed Time: ' + str(stopTime - startTime))
     elif (args.subparser_name == "query"):
         clusterDictionary["clusterName"] = args.clustername
         clusterDictionary["nodeQty"] = args.nodes
@@ -133,6 +166,11 @@ def cliParse():
             os.environ["CONFIGS_PATH"] = os.path.dirname(args.config) + '/'
         print clusterDictionary["clusterName"] + ": Querying Nodes in a Cluster"
         QueryCluster.checkServerState(clusterDictionary)
+        stopTime = datetime.datetime.today()
+        print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
+        logging.debug("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
+        print  "Elapsed Time: ", stopTime - startTime
+        logging.info('Elapsed Time: ' + str(stopTime - startTime))
     elif (args.subparser_name == "destroy"):
         clusterDictionary["clusterName"] = args.clustername
         clusterDictionary["nodeQty"] = args.nodes
@@ -142,13 +180,14 @@ def cliParse():
             os.environ["CONFIGS_PATH"] = os.path.dirname(args.config) + '/'
         print clusterDictionary["clusterName"] + ": Destroying Cluster"
         ClusterDestroyer.destroyServers(clusterDictionary)
+        stopTime = datetime.datetime.today()
+        print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
+        logging.debug("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
+        print  "Elapsed Time: ", stopTime - startTime
+        logging.info('Elapsed Time: ' + str(stopTime - startTime))
 
 
 if __name__ == '__main__':
-    startTime = datetime.datetime.today()
-    print  "Start Time: ", startTime
+
     os.environ["CAPE_HOME"] = os.getcwd()
     cliParse()
-    stopTime = datetime.datetime.today()
-    print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
-    print  "Elapsed Time: ", stopTime - startTime
