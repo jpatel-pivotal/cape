@@ -327,8 +327,8 @@ def setPaths(clusterNode):
 
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-            logging.debug('Connecting to Node: ' + str(node["nodeName"]))
-            logging.debug('SSH IP: ' + node["externalIP"] +
+            logging.debug('Connecting to Node: ' + str(clusterNode["nodeName"]))
+            logging.debug('SSH IP: ' + clusterNode["externalIP"] +
                           ' User: gpadmin')
             ssh.connect(clusterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
             logging.info('Setting up bashrc')
