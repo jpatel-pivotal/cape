@@ -600,10 +600,10 @@ def initDB(clusterNode, clusterName):
             # Adding gpssh-exkeys here for now
             # We need to figure out the key exchange and then remove this step
             #
-            (stdin, stdout, stderr) = ssh.exec_command(
-                "source /usr/local/greenplum-db/greenplum_path.sh;gpssh-exkeys -f /tmp/workers")
-            stdout.readlines()
-            stderr.readlines()
+            # (stdin, stdout, stderr) = ssh.exec_command(
+            #     "source /usr/local/greenplum-db/greenplum_path.sh;gpssh-exkeys -f /tmp/workers")
+            # stdout.readlines()
+            # stderr.readlines()
             (stdin, stdout, stderr) = ssh.exec_command(
                 "source /usr/local/greenplum-db/greenplum_path.sh;gpinitsystem -c /tmp/gpinitsystem_config.cape -a")
             stdout.readlines()

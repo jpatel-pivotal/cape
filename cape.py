@@ -109,8 +109,8 @@ def cliParse():
             logging.debug("Creating a Greenplum Database Cluster:" + clusterDictionary["clusterName"])
             logging.debug('With Dictionary: ' + json.dumps(clusterDictionary))
             ClusterBuilder.buildServers(clusterDictionary)
-            #downloads = SoftwareDownload.downloadSoftware(clusterDictionary)
-            #InstallGPDB.installGPDB(clusterDictionary, downloads)
+            downloads = SoftwareDownload.downloadSoftware(clusterDictionary)
+            InstallGPDB.installGPDB(clusterDictionary, downloads)
             stopTime = datetime.datetime.today()
             print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
             logging.debug("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
