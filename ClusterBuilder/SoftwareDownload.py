@@ -16,7 +16,7 @@ def downloadSoftware(clusterDictionary):
     package = clusterDictionary["clusterType"]
     logging.debug('Package to Download: ' + package)
     headers = {"Authorization": "Token " + os.environ["PIVNET_APIKEY"]}
-    logging.debug('Auth Token: ' + headers)
+    logging.debug('Auth Token: ' + json.dumps(headers))
 
     # FIND PRODUCT
     response = requests.get("https://network.pivotal.io/api/v2/products")
