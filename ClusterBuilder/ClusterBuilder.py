@@ -25,7 +25,7 @@ def buildServers(clusterDictionary):
     try:
         if not os.path.exists(clusterDictionary["clusterName"]):
             os.makedirs("./clusterConfigs/" + clusterDictionary["clusterName"])
-            logging.debug("Created: ./clusterConfigs" +
+            logging.debug("Created: ./clusterConfigs/" +
                           clusterDictionary["clusterName"])
 
     except OSError:
