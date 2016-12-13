@@ -334,14 +334,23 @@ def keyShare(clusterDictionary):
                 logging.debug(stdout.readlines())
                 logging.debug(stderr.readlines())
                 for node1 in clusterDictionary["clusterNodes"]:
-                    if '000' in node1["nodeName"]:
-                            break
-                    logging.debug("exchange key ssh from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]))
-                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["GPADMIN_PW"] + "  ssh gpadmin@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
+                    # Explicitly writing exit so ssh session does not hang
+                    logging.debug("exchange key ssh from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]) + " using internal IP")
+                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["GPADMIN_PW"] + "  ssh gpadmin@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no")
+                    stdin.write('exit \n')
+                    stdin.flush()
+                    logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
+                    logging.debug("exchange key ssh from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]) + " using FQDN")
+                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["GPADMIN_PW"] + "  ssh gpadmin@" + node1["FQDN"]+ " -o StrictHostKeyChecking=no")
+                    stdin.write('exit \n')
+                    stdin.flush()
                     logging.debug(stdout.readlines())
                     logging.debug(stderr.readlines())
                     logging.debug("exchange key ssh-copy-id from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["GPADMIN_PW"] + "  ssh-copy-id  gpadmin@" + node1["nodeName"])
+                    stdin.write('exit \n')
+                    stdin.flush()
                     logging.debug(stdout.readlines())
                     logging.debug(stderr.readlines())
 
@@ -358,16 +367,25 @@ def keyShare(clusterDictionary):
                 logging.debug('Configure SSH settings')
                 ssh.exec_command("echo 'Host *\nStrictHostKeyChecking no' >> ~/.ssh/config;chmod 400 ~/.ssh/config")
                 for node1 in clusterDictionary["clusterNodes"]:
-                    if '000' in node1["nodeName"]:
-                            break
-                    logging.debug("exchange key ssh from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]))
+                    # explicitly writing exit to stdin so ssh session does not hang
+                    logging.debug("exchange key ssh from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]) + " using internal IP")
                     (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["ROOT_PW"] + "  ssh root@" + node1["internalIP"]+ " -o StrictHostKeyChecking=no" )
+                    stdin.write('exit \n')
+                    stdin.flush()
+                    logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
+                    logging.debug("exchange key ssh from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]) + " using FQDN")
+                    (stdin, stdout, stderr) = ssh.exec_command("sshpass -p " + os.environ["ROOT_PW"] + "  ssh root@" + node1["FQDN"]+ " -o StrictHostKeyChecking=no" )
+                    stdin.write('exit \n')
+                    stdin.flush()
                     logging.debug(stdout.readlines())
                     logging.debug(stderr.readlines())
                     logging.debug("exchange key ssh-copy-id from " + str(node["nodeName"]) + " to " + str(node1["nodeName"]))
                     (stdin, stdout, stderr) = ssh.exec_command(
                         "sshpass -p " + os.environ["ROOT_PW"] + "  ssh-copy-id  root@" + node1[
                             "nodeName"])
+                    stdin.write('exit \n')
+                    stdin.flush()
                     logging.debug(stdout.readlines())
                     logging.debug(stderr.readlines())
 
