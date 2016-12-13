@@ -716,9 +716,9 @@ def initDB(clusterNode, clusterName):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-                logging.debug('Connecting to Node: ' + str(clusterNode["nodeName"]))
-                logging.debug('SSH IP: ' + clusterNode["externalIP"] +
-                              ' User: gpadmin')
+            logging.debug('Connecting to Node: ' + str(clusterNode["nodeName"]))
+            logging.debug('SSH IP: ' + clusterNode["externalIP"] +
+                          ' User: gpadmin')
             ssh.connect(clusterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
             #
             # Adding gpssh-exkeys here for now
