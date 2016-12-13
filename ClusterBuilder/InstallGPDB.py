@@ -4,6 +4,8 @@ import threading
 import time
 import traceback
 import paramiko
+import json
+import logging
 from paramiko import WarningPolicy
 
 from LabBuilder import AccessHostPrepare
@@ -11,6 +13,7 @@ from LabBuilder import StudentAccounts
 
 def installGPDB(clusterDictionary, downloads):
     print clusterDictionary["clusterName"] + ": Installing Greenplum Database on Cluster"
+    logging.debug('Installing GPDB with Dictionary: ' + json.dumps(clusterDictionary))
     threads = []
     masterNode = {}
     accessNode = {}
@@ -61,6 +64,7 @@ def installGPDB(clusterDictionary, downloads):
 
 
     print clusterDictionary["clusterName"] + ": Database Installation Complete"
+    logging.info(clusterDictionary["clusterName"] + ': Database Installation Complete')
     print clusterDictionary["clusterName"] + ": Initializing Greenplum Database"
     initDB(masterNode, clusterDictionary["clusterName"])
     print clusterDictionary["clusterName"] + ": Database Initialization Complete"
@@ -85,7 +89,6 @@ def installGPDB(clusterDictionary, downloads):
         modifyPHGBA(masterNode)
         print clusterDictionary["clusterName"] + ": Access Host configured to connect Complete"
 
-
     setGPADMINPW(masterNode)
 
     # NEEDS TO BE OPTIONAL
@@ -98,10 +101,8 @@ def installGPDB(clusterDictionary, downloads):
     #     x.join()
 
 
-
-
-
 def installComponents(masterNode, downloads):
+    logging.info('installComponents Started on: ' + str(masterNode["nodeName"]))
     connected = False
     attemptCount = 0
 
@@ -110,25 +111,27 @@ def installComponents(masterNode, downloads):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-
+            logging.debug('Connecting to Node: ' + str(masterNode["nodeName"]))
+            logging.debug('SSH IP: ' + masterNode["externalIP"] +
+                          ' User: gpadmin')
             ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
             (stdin, stdout, stderr) = ssh.exec_command("createlang plpythonu -d template1")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
             (stdin, stdout, stderr) = ssh.exec_command("createlang plpythonu -d gpadmin")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
             (stdin, stdout, stderr) = ssh.exec_command("gppkg -i /tmp/madlib*.gppkg")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
             ssh.exec_command("$GPHOME/madlib/bin/madpack install -s madlib -p greenplum -c gpadmin@" + masterNode[
                 "nodeName"] + "/template1")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
             ssh.exec_command("$GPHOME/madlib/bin/madpack install -s madlib -p greenplum -c gpadmin@" + masterNode[
                 "nodeName"] + "/gpadmin")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
 
             connected = True
 
@@ -137,14 +140,19 @@ def installComponents(masterNode, downloads):
             print masterNode["nodeName"] + ": Waiting on Database Connection"
             time.sleep(3)
             if attemptCount > 10:
+                logging.debug('Exception: ' + str(e))
+                logging.debug(traceback.print_exc())
+                logging.debug('Failed')
                 print "Failing Process: Please Verify Database Manually."
                 exit()
-
+    logging.info('installComponents Completed on: ' + str(masterNode["nodeName"]))
 
 def verifyInstall(masterNode, clusterDictionary):
+    logging.info('verifyInstall Started on: ' + str(masterNode["nodeName"]))
     numberSegments = int(clusterDictionary["segmentCount"])
-
+    logging.debug('SegCount: ' + str(numberSegments))
     totalSegmentDBs = numberSegments * int(clusterDictionary["segmentDBs"])
+    logging.debug('TotalSegmentDBs in CLuster: ' + str(totalSegmentDBs))
     #totalSegmentDBs = numberSegments * int(os.environ.get("SEGMENTDBS"))
 
 
@@ -161,52 +169,61 @@ def verifyInstall(masterNode, clusterDictionary):
 
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-
+            logging.debug('Connecting to Node: ' + str(masterNode["nodeName"]))
+            logging.debug('SSH IP: ' + masterNode["externalIP"] +
+                          ' User: gpadmin')
             ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
             (stdin, stdout, stderr) = ssh.exec_command(
                 "psql -c \"SELECT version() ;\"")
             return_code = stdout.channel.recv_exit_status()
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
             if return_code != 0:
                 print("Returned: " + str(return_code))
-                sys.exit("Failed to Verify initialization: Please Verify Database Manually.")
+                sys.exit("Failed to connect to Database using psql: Please Verify Database Manually.")
             else:
                 print (masterNode["nodeName"] + ": Performing detailed database verification")
                 (stdin, stdout, stderr) = ssh.exec_command(
                     "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'u';\"")
                 upSegments = int((stdout.readlines())[2])
-                stderr.readlines()
+                logging.debug('UpSegements: ' + str(upSegments))
+                logging.debug(stderr.readlines())
 
                 (stdin, stdout, stderr) = ssh.exec_command(
                     "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'd';\"")
                 downSegments = int((stdout.readlines())[2])
-                stderr.readlines()
+                logging.debug('downSegments: ' + str(downSegments))
+                logging.debug(stderr.readlines())
 
                 (stdin, stdout, stderr) = ssh.exec_command(
                     "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0;\"")
                 segments = int(stdout.readlines()[2])
-                stderr.readlines()
+                logging.debug('segments: ' + str(segments))
+                logging.debug(stderr.readlines())
 
                 (stdin, stdout, stderr) = ssh.exec_command(
                     "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and role='p';\"")
                 primarySegments = int(stdout.readlines()[2])
-                stderr.readlines()
+                logging.debug('primarySegments: ' + str(primarySegments))
+                logging.debug(stderr.readlines())
 
                 (stdin, stdout, stderr) = ssh.exec_command(
                     "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and role='m';\"")
 
                 mirrorSegments = int(stdout.readlines()[2])
-                stderr.readlines()
+                logging.debug('mirrorSegments: ' + str(mirrorSegments))
+                logging.debug(stderr.readlines())
 
                 connected = True
 
                 if ((totalSegmentDBs * 2) == upSegments) and (totalSegmentDBs == primarySegments) and (
                     totalSegmentDBs == mirrorSegments):
                     print clusterDictionary["clusterName"] + ": Greenplum Database Initialization Verified"
+                    logging.info('verifyInstall Completed on: ' + str(masterNode["nodeName"]))
                 else:
                     print clusterDictionary[
                           "clusterName"] + ": Something went wrong with the Database initialization, please verify manually"
+                    logging.info('GPDB Primary and Mirror Counts do not match. Failing to Verify!')
 
         except Exception as e:
             print e
@@ -214,6 +231,9 @@ def verifyInstall(masterNode, clusterDictionary):
             print masterNode["nodeName"] + ": Waiting on Database Connection"
             time.sleep(3)
             if attemptCount > 10:
+                logging.debug('Exception: ' + str(e))
+                logging.debug(traceback.print_exc())
+                logging.debug('Failed')
                 print "Failing Process: Please Verify Database Manually."
                 exit()
 
@@ -221,6 +241,7 @@ def verifyInstall(masterNode, clusterDictionary):
 #####
 
 def installDSPackages(clusterNode):
+    logging.info('installDSPackages Started on: ' + str(clusterNode["nodeName"]))
     connected = False
     attemptCount = 0
     while not connected:
@@ -229,47 +250,56 @@ def installDSPackages(clusterNode):
 
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-
+            logging.debug('Connecting to Node: ' + str(clusterNode["nodeName"]))
+            logging.debug('SSH IP: ' + clusterNode["externalIP"] +
+                          ' User: gpadmin')
             ssh.connect(clusterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
 
             # FIX FOR GENSIM
+            logging.info('Gensim fix')
             (stdin, stdout, stderr) = ssh.exec_command("echo -e 'import sys\nsys.setdefaultencoding(\"utf-8\")' >> /usr/local/greenplum-db-4.3.9.1/ext/python/lib/python2.6/site-packages/sitecustomize.py")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
 
             # INSTALL PIP FOR GP-PYTHON
+            logging.info('Installing pip')
             (stdin, stdout, stderr) = ssh.exec_command("wget https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py;python /tmp/get-pip.py --no-cache-dir")
-            stdout.readlines()
-            stderr.readlines()
+            logigng.debug(stdout.readlines())
+            logigng.debug(stderr.readlines())
 
             # INSTALL NUMPY
+            logging.info('Installing numpy')
             (stdin, stdout, stderr) = ssh.exec_command("pip install numpy==1.9.3 -U --no-cache-dir")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logign.debug(stderr.readlines())
 
             # INSTALL SCIPY
+            logging.info('Installing scipy')
             (stdin, stdout, stderr) = ssh.exec_command("export CXX=/usr/bin/g++;pip install scipy==0.18.0 -U --no-cache-dir")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
 
             # INSTALL SCIKIT-LEARN
+            logging.info('Installing scikit-learn')
             (stdin, stdout, stderr) = ssh.exec_command("pip install scikit-learn==0.17.1 -U --no-cache-dir")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
 
             # INSTALL nltk
+            logging.info('Installing nltk')
             (stdin, stdout, stderr) = ssh.exec_command("pip install nltk==3.1 -U --no-cache-dir")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
 
             # INSTALL GENSIM
+            logging.info('Installing gensim')
             (stdin, stdout, stderr) = ssh.exec_command("cp /usr/lib64/python2.6/lib-dynload/bz2.so /usr/local/greenplum-db-4.3.9.1/ext/python/lib/python2.6/lib-dynload/bz2.so")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
 
             (stdin, stdout, stderr) = ssh.exec_command("pip install gensim -U --no-cache-dir --no-dependencies")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
 
 
             connected = True
@@ -277,13 +307,18 @@ def installDSPackages(clusterNode):
             print clusterNode["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 1:
+                logging.debug('Exception: ' + str(e))
+                logging.debug(traceback.print_exc())
+                logging.debug('Failed')
                 print "Failing Process"
                 exit()
         finally:
             ssh.close()
+            logging.info('installDSPackages Completed on: ' + str(clusterNode["nodeName"]))
 ###
 
 def setPaths(clusterNode):
+    logging.info('setPaths Started on: ' + str(clusterNode["nodeName"]))
     connected = False
     attemptCount = 0
     while not connected:
@@ -292,26 +327,32 @@ def setPaths(clusterNode):
 
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-
+            logging.debug('Connecting to Node: ' + str(clusterNode["nodeName"]))
+            logging.debug('SSH IP: ' + clusterNode["externalIP"] +
+                          ' User: gpadmin')
             ssh.connect(clusterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
-
+            logging.info('Setting up bashrc')
             (stdin, stdout, stderr) = ssh.exec_command(
                 "echo 'source /usr/local/greenplum-db/greenplum_path.sh\n' >> ~/.bashrc")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
             (stdin, stdout, stderr) = ssh.exec_command(
                 "echo 'export MASTER_DATA_DIRECTORY=/data/disk1/master/gpseg-1\n' >> ~/.bashrc")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
             connected = True
         except Exception as e:
             print clusterNode["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 1:
+                logging.debug('Exception: ' + str(e))
+                logging.debug(traceback.print_exc())
+                logging.debug('Failed')
                 print "Failing Process"
                 exit()
         finally:
             ssh.close()
+            logging.info('setPaths Completed on: ' + str(clusterNode["nodeName"]))
 
 
 def cleanUp(clusterDictionary):
@@ -319,6 +360,7 @@ def cleanUp(clusterDictionary):
 
 
 def makeDirectories(clusterNode):
+    logging.info('makeDirectories Started on: ' + str(clusterNode["nodeName"]))
     connected = False
     attemptCount = 0
     while not connected:
@@ -327,40 +369,54 @@ def makeDirectories(clusterNode):
 
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
+            logging.debug('Connecting to Node: ' + clusterNode["nodeName"])
+            logging.debug('SSH IP: ' + clusterNode["externalIP"] + ' User: ' +
+                          os.environ["SSH_USERNAME"] + ' Key: ' +
+                          str(os.environ["CONFIGS_PATH"]) +
+                          str(os.environ["SSH_KEY"]))
             ssh.connect(clusterNode["externalIP"], 22, str(os.environ["SSH_USERNAME"]), None, pkey=None,
                         key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]),
                         timeout=120)
             if "master" in clusterNode["role"]:
+                logging.info('Making /data/disk1/master')
                 (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/disk1/master")
-                stdout.readlines()
-                stderr.readlines()
+                logging.debug(stdout.readlines())
+                logging.debug(stderr.readlines())
             else:
 
                 numDisks = os.environ["DISK_QTY"]
+                logging.debug('numDisks: ' + str(numDisks))
                 segDBs = os.environ["SEGMENTDBS"]
+                logging.debug('segmentdbs: ' + str(segDBs))
+                logging.info('Making primary and mirror top level dirs and setting permissions')
                 for diskNum in range(1, int(numDisks) + 1):
                     (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/disk"+str(diskNum)+"/primary")
-                    stdout.readlines()
-                    stderr.readlines()
+                    logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
                     (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/disk"+str(diskNum)+"/mirror")
-                    stdout.readlines()
-                    stderr.readlines()
+                    logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
             (stdin, stdout, stderr) = ssh.exec_command("sudo chown -R gpadmin: /data")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
 
             connected = True
         except Exception as e:
             print clusterNode["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 1:
+                logging.debug('Exception: ' + str(e))
+                logging.debug(traceback.print_exc())
+                logging.debug('Failed')
                 print "Failing Process"
                 exit()
         finally:
             ssh.close()
+            logging.info('makeDirectories Completed on: ' + str(clusterNode["nodeName"]))
 
 
 def setGPADMINPW(masterNode):
+    logging.info('setGPADMINPW Started on: ' + str(masterNode["nodeName"]))
     connected = False
     attemptCount = 0
     while not connected:
@@ -368,13 +424,17 @@ def setGPADMINPW(masterNode):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
+            logging.debug('Connecting to Node: ' + str(masterNode["nodeName"]))
+            logging.debug('SSH IP: ' + masterNode["externalIP"] +
+                          ' User: gpadmin')
             ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
+            logging.info('Setting gpadmin password in DB')
             (stdin, stdout, stderr) = ssh.exec_command(
                 "psql -c \"alter user gpadmin with password '" + str(os.environ["GPADMIN_PW"]) + "';\"")
 
             # (stdin, stdout, stderr) = ssh.exec_command("alter user gpadmin with password '"+str(os.environ.get("GPADMIN_PW"))+ "';")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
             connected = True
         except Exception as e:
             print e
@@ -382,13 +442,18 @@ def setGPADMINPW(masterNode):
             print masterNode["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 1:
+                logging.debug('Exception: ' + str(e))
+                logging.debug(traceback.print_exc())
+                logging.debug('Failed')
                 print "Failing Process"
                 exit()
         finally:
             ssh.close()
+            logging.info('setGPADMINPW Started on: ' + str(masterNode["nodeName"]))
 
 
 def modifyPHGBA(masterNode):
+    logging.info('modifyPHGBA Started on: ' + str(masterNode["nodeName"]))
     connected = False
     attemptCount = 0
 
@@ -397,27 +462,36 @@ def modifyPHGBA(masterNode):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
+            logging.debug('Connecting to Node: ' + str(masterNode["nodeName"]))
+            logging.debug('SSH IP: ' + masterNode["externalIP"] +
+                          ' User: gpadmin')
             ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
+            logging.info('allowing access')
             (stdin, stdout, stderr) = ssh.exec_command(
                 "echo 'host all gpadmin " + accessNode['internalIP'] + "/0 md5' >> /data/master/gpseg-1/pg_hba.conf")
-            stdout.readlines()
-            stderr.readlines()
-
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
+            logging.info('Restarting DB')
             (stdin, stdout, stderr) = ssh.exec_command("gpstop -a -r")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
             connected = True
         except Exception as e:
             print masterNode["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 1:
+                logging.debug('Exception: ' + str(e))
+                logging.debug(traceback.print_exc())
+                logging.debug('Failed')
                 print "Failing Process"
                 exit()
         finally:
             ssh.close()
+            logging.info('modifyPHGBA Completed on: ' + str(masterNode["nodeName"]))
 
 
 def uncompressFiles(clusterNode, downloads):
+    logging.info('uncompressFiles Started on: ' + str(clusterNode["nodeName"]))
     connected = False
     attemptCount = 0
     while not connected:
@@ -426,32 +500,41 @@ def uncompressFiles(clusterNode, downloads):
 
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
-
+            logging.debug('Connecting to Node: ' + clusterNode["nodeName"])
+            logging.debug('SSH IP: ' + clusterNode["externalIP"] + ' User: ' +
+                          os.environ["SSH_USERNAME"] + ' Key: ' +
+                          str(os.environ["CONFIGS_PATH"]) +
+                          str(os.environ["SSH_KEY"]))
             ssh.connect(clusterNode["externalIP"], 22, str(os.environ["SSH_USERNAME"]), None, pkey=None,
                         key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]), timeout=120)
-
+            logging.info('Unzipping files')
             for file in downloads:
                 if ".zip" in file["NAME"]:
                     (stdin, stdout, stderr) = ssh.exec_command("cd /tmp;unzip ./" + file["NAME"])
-                    stdout.readlines()
-                    stderr.readlines()
+                    logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
                 elif ".gz" in file["NAME"]:
                     (stdin, stdout, stderr) = ssh.exec_command("cd /tmp;tar xvfz ./" + file["NAME"])
-                    stdout.readlines()
-                    stderr.readlines()
+                    logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
 
             connected = True
         except Exception as e:
             print clusterNode["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 1:
+                logging.debug('Exception: ' + str(e))
+                logging.debug(traceback.print_exc())
+                logging.debug('Failed')
                 print "Failing Process"
                 exit()
         finally:
             ssh.close()
+            logging.info('uncompressFiles Completed on: ' + str(clusterNode["nodeName"]))
 
 
 def prepFiles(clusterNode):
+    logging.info('prepFiles Started on: ' + str(clusterNode["nodeName"]))
     connected = False
     attemptCount = 0
     while not connected:
@@ -460,37 +543,47 @@ def prepFiles(clusterNode):
 
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
+            logging.debug('Connecting to Node: ' + clusterNode["nodeName"])
+            logging.debug('SSH IP: ' + clusterNode["externalIP"] + ' User: ' +
+                          os.environ["SSH_USERNAME"] + ' Key: ' +
+                          str(os.environ["CONFIGS_PATH"]) +
+                          str(os.environ["SSH_KEY"]))
             ssh.connect(clusterNode["externalIP"], 22, str(os.environ["SSH_USERNAME"]), None, pkey=None,
                         key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]), timeout=120)
-
+            logging.info('Preparing GPDB Install Binary')
             (stdin, stdout, stderr) = ssh.exec_command("sudo sed -i 's/more <</cat <</g' /tmp/greenplum-db*.bin")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
             (stdin, stdout, stderr) = ssh.exec_command("sudo sed -i 's/agreed=/agreed=1/' /tmp/greenplum-db*.bin")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
 
             (stdin, stdout, stderr) = ssh.exec_command(
                 "sudo sed -i 's/pathVerification=/pathVerification=1/' /tmp/greenplum-db*.bin")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
             (stdin, stdout, stderr) = ssh.exec_command(
                 "sudo sed -i 's/user_specified_installPath=/user_specified_installPath=${installPath}/' /tmp/greenplum-db*.bin")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
 
             connected = True
         except Exception as e:
             print clusterNode["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 1:
+                logging.debug('Exception: ' + str(e))
+                logging.debug(traceback.print_exc())
+                logging.debug('Failed')
                 print "Failing Process"
                 exit()
         finally:
             ssh.close()
+            logging.info('prepFiles Completed on: ' + str(clusterNode["nodeName"]))
 
 
 def installBits(clusterNode):
+    logging.info('installBits Started on: ' + str(clusterNode["nodeName"]))
     connected = False
     attemptCount = 0
     while not connected:
@@ -499,51 +592,68 @@ def installBits(clusterNode):
 
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
+            logging.debug('Connecting to Node: ' + clusterNode["nodeName"])
+            logging.debug('SSH IP: ' + clusterNode["externalIP"] + ' User: ' +
+                          os.environ["SSH_USERNAME"] + ' Key: ' +
+                          str(os.environ["CONFIGS_PATH"]) +
+                          str(os.environ["SSH_KEY"]))
             ssh.connect(clusterNode["externalIP"], 22, str(os.environ["SSH_USERNAME"]), None, pkey=None,
                         key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]),
                         timeout=120)
-
+            logging.info('Installing GPDB')
             (stdin, stdout, stderr) = ssh.exec_command("sudo /tmp/greenplum-db*.bin")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
             (stdin, stdout, stderr) = ssh.exec_command("sudo chown -R gpadmin: /usr/local/greenplum-db*")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
 
             # Go ahead and change owner on Data Disk(s).   Only One now, but change this if more disks are added.
             # (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/master;sudo chown -R gpadmin: /data")
-
-            stdout.readlines()
-            stderr.readlines()
+            # I believe these need to be commented as the command got commented
+            # stdout.readlines()
+            # stderr.readlines()
 
             connected = True
         except Exception as e:
             print clusterNode["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 1:
+                logging.debug('Exception: ' + str(e))
+                logging.debug(traceback.print_exc())
+                logging.debug('Failed')
                 print "Failing Process"
                 exit()
         finally:
             ssh.close()
+            logging.info('installBits Completed on: ' + str(clusterNode["nodeName"]))
 
 
 def initDB(clusterNode, clusterName):
+    logging.info('initDB Started on: ' + str(clusterNode["nodeName"]))
     # Read the template, modify it, write it to the cluster directory and the master
 
     ## BUILD DATA DIRECTORY AND MIRROR DIRECTORY
     # SHOULD BE #SEGDB ENTRIES ACROSS # DRIVES.
+    logging.debug('CAPE_HOME: ' + str(os.environ["CAPE_HOME"]))
+    logging.debug('Current Dir: ' + os.getcwd())
     numDisks = os.environ["DISK_QTY"]
+    logging.debug('numDisks: ' + str(numDisks))
     segDBs = os.environ["SEGMENTDBS"]
+    logging.debug('segDBs: ' + str(segDBs))
     diskBase = os.environ["BASE_HOME"]
+    logging.debug('diskBase: ' + diskBase)
     dataDirectories = ""
     mirrorDirectories = ""
 
     if int(numDisks) > 1:
         # Spread Primaries and mirrors across all drives
         segDBDirs = (int(segDBs)/2)
+        logging.debug('segDBDirs: '+ str(segDBDirs))
     else:
         # We only have one drive so no spreading of primaries and mirrors
         segDBDirs = int(segDBs)
+        logging.debug('segDBDirs: ' + str(segDBDirs))
 
     for diskNum in range(1, int(numDisks)+1):
         for segNum in range(1, int(segDBDirs)+1):
@@ -551,7 +661,8 @@ def initDB(clusterNode, clusterName):
                 str(diskNum) + "/primary "
             mirrorDirectories = mirrorDirectories + diskBase+"/disk" +\
                 str(diskNum)+"/mirror "
-
+    logging.debug('dataDirectories: ' + dataDirectories)
+    logging.debug('mirrorDirectories: ' + mirrorDirectories)
 
     with open(str(os.environ["CAPE_HOME"])+"/templates/gpinitsystem_config.template", 'r+') as gpConfigTemplate:
         gpConfigTemplateData = gpConfigTemplate.read()
@@ -563,6 +674,7 @@ def initDB(clusterNode, clusterName):
     with open(os.environ["CAPE_HOME"] + "/clusterConfigs/" + str(clusterName) + "/gpinitsystem_config",
               'w') as gpConfigCluster:
         gpConfigCluster.write(gpConfigTemplateData)
+    logging.debug('Wrote File: ' + str(os.environ["CAPE_HOME"]) + "/clusterConfigs/" + str(clusterName) + "/gpinitsystem_config")
 
     connected = False
     attemptCount = 0
@@ -571,17 +683,26 @@ def initDB(clusterNode, clusterName):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
+            logging.debug('Connecting to Node: ' + clusterNode["nodeName"])
+            logging.debug('SSH IP: ' + clusterNode["externalIP"] + ' User: ' +
+                          os.environ["SSH_USERNAME"] + ' Key: ' +
+                          str(os.environ["CONFIGS_PATH"]) +
+                          str(os.environ["SSH_KEY"]))
             ssh.connect(clusterNode["externalIP"], 22, os.environ["SSH_USERNAME"], None, pkey=None,
                         key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]),
                         timeout=120)
+            logging.info('Uploading gpinitsystem_config.cape file')
             sftp = ssh.open_sftp()
-            sftp.put("gpinitsystem_config", "/tmp/gpinitsystem_config.cape")
+            sftp.put("gpinitsystem_config", "/tmp/gpinitsystem_config.cape", confirm=True)
 
             connected = True
         except Exception as e:
             print clusterNode["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 1:
+                logging.debug('Exception: ' + str(e))
+                logging.debug(traceback.print_exc())
+                logging.debug('Failed')
                 print "Failing Process"
                 exit()
         finally:
@@ -595,6 +716,9 @@ def initDB(clusterNode, clusterName):
             attemptCount += 1
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(WarningPolicy())
+            logging.debug('Connecting to Node: ' + str(clusterNode["nodeName"]))
+            logging.debug('SSH IP: ' + clusterNode["externalIP"] +
+                          ' User: gpadmin')
             ssh.connect(clusterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
             #
             # Adding gpssh-exkeys here for now
@@ -604,16 +728,21 @@ def initDB(clusterNode, clusterName):
             #     "source /usr/local/greenplum-db/greenplum_path.sh;gpssh-exkeys -f /tmp/workers")
             # stdout.readlines()
             # stderr.readlines()
+            logging.info('Starting DB init')
             (stdin, stdout, stderr) = ssh.exec_command(
                 "source /usr/local/greenplum-db/greenplum_path.sh;gpinitsystem -c /tmp/gpinitsystem_config.cape -a")
-            stdout.readlines()
-            stderr.readlines()
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
             connected = True
         except Exception as e:
             print clusterNode["nodeName"] + ": Attempting SSH Connection"
             time.sleep(3)
             if attemptCount > 1:
+                logging.debug('Exception: ' + str(e))
+                logging.debug(traceback.print_exc())
+                logging.debug('Failed')
                 print "Failing InitDB Process"
                 exit()
         finally:
             ssh.close()
+            logging.info('initDB Completed on: ' + str(clusterNode["nodeName"]))
