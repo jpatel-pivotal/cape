@@ -23,9 +23,12 @@ def buildServers(clusterDictionary):
     # ADD ACTUAL CHECKING FOR EXISTING CLUSTER....THIS WAS JUST FOR TEST
 
     try:
-        if not os.path.exists(clusterDictionary["clusterName"]):
-            os.makedirs("./clusterConfigs/" + clusterDictionary["clusterName"])
-            logging.debug("Created: ./clusterConfigs/" +
+        if not os.path.exists(str(os.environ["CAPE_HOME"]) +
+                              "/clusterConfigs/" +
+                              clusterDictionary["clusterName"]):
+            os.makedirs(str(os.environ["CAPE_HOME"]) +
+                        "/clusterConfigs/" + clusterDictionary["clusterName"])
+            logging.debug("Created: /clusterConfigs/" +
                           clusterDictionary["clusterName"])
 
     except OSError:
@@ -37,7 +40,7 @@ def buildServers(clusterDictionary):
         else:
             print "Cluster Name already exists."
             logging.error("Cluster Name already exists. Exiting!")
-    clusterPath = "./clusterConfigs/" + clusterDictionary["clusterName"]
+    clusterPath = str(os.environ["CAPE_HOME"]) + "/clusterConfigs/" + clusterDictionary["clusterName"]
     logging.debug("ClusterPath: " + str(clusterPath))
 
     clusterNodes = []
