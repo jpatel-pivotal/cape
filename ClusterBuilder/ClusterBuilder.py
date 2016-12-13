@@ -12,12 +12,6 @@ from paramiko import WarningPolicy
 from paramiko import AutoAddPolicy
 
 
-logging.basicConfig(filename='cape.log', level=logging.DEBUG,
-                    format='[%(asctime)s] %(pathname)s \
-                    {%(module)s:%(funcName)s:%(lineno)d} %(levelname)s \
-                    %(threadName)s - %(message)s')
-
-
 def buildServers(clusterDictionary):
     logging.debug('buildServers Started')
     warnings.simplefilter("ignore")
