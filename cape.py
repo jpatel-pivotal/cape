@@ -15,6 +15,135 @@ from QueryCluster import QueryCluster
 from LabBuilder import StudentAccounts
 
 
+def checkRequiredVars(args):
+    logging.info('Checking Required Variables')
+    # Check cloud auth params
+    if os.environ["PROJECT"] is not None:
+        logging.debug('PROJECT: ' + str(os.environ["PROJECT"]))
+    else:
+        sys.exit('Failed! Add PROJECT=<project name> to your ' + args.config +
+                 ' file.\n')
+    if os.environ["SSH_USERNAME"] is not None:
+        logging.debug('SSH_USERNAME: ' + str(os.environ["SSH_USERNAME"]))
+    else:
+        sys.exit('Failed! Add SSH_USERNAME=<user name> to your ' +
+                 args.config + ' file.\n')
+    if os.environ["SVC_ACCOUNT"] is not None:
+        logging.debug('SVC_ACCOUNT: ' + str(os.environ["SVC_ACCOUNT"]))
+    else:
+        sys.exit('Failed! Add SVC_ACCOUNT=<service account name> to your ' +
+                 args.config + ' file.\n')
+    if os.environ["SSH_KEY"] is not None:
+        logging.debug('SSH_KEY: ' + str(os.environ["SSH_KEY"]))
+    else:
+        sys.exit('Failed! Add SSH_KEY=<filename of ssh keyfile> to your ' +
+                 args.config + ' file.\n')
+    if os.path.isfile(str(os.environ["CONFIGS_PATH"]) + '/' +
+                      os.environ["SSH_KEY"]):
+        logging.debug('SSH_KEY file exists and accessible')
+    else:
+        sys.exit('Failed! Cannot access: ' + str(os.environ["CONFIGS_PATH"]) +
+                 '/' + str(os.environ["SSH_KEY"]) +
+                 ' or file does not exist!' +
+                 '\nFix SSH_KEY in your ' + args.config + ' file.\n')
+    if os.path.isfile(str(os.environ["CONFIGS_PATH"]) + '/' +
+                      os.environ["SVC_ACCOUNT_KEY"]):
+        logging.debug('SVC_ACCOUNT_KEY file exists and accessible')
+    else:
+        sys.exit('Failed! Cannot access: ' + str(os.environ["CONFIGS_PATH"]) +
+                 '/' + str(os.environ["SVC_ACCOUNT_KEY"]) +
+                 ' or file does not exist!' +
+                 '\nFix SVC_ACCOUNT_KEY in your ' + args.config + ' file.\n')
+    # Check params used to deploy vms
+    if os.environ["SERVER_TYPE"] is not None:
+        logging.debug('SERVER_TYPE: ' + str(os.environ["SERVER_TYPE"]))
+    else:
+        sys.exit('Failed! Add SERVER_TYPE=<instance name> to your ' +
+                 args.config + ' file.\n')
+    if os.environ["IMAGE"] is not None:
+        logging.debug('IMAGE: ' + str(os.environ["IMAGE"]))
+    else:
+        sys.exit('Failed! Add IMAGE=<image name> to your ' + args.config +
+                 ' file.\n')
+    if os.environ["ZONE"] is not None:
+        logging.debug('ZONE: ' + str(os.environ["ZONE"]))
+    else:
+        sys.exit('Failed! Add ZONE=<zone name> to your ' + args.config +
+                 ' file.\n')
+    if os.environ["DISK_TYPE"] is not None:
+        logging.debug('DISK_TYPE: ' + str(os.environ["DISK_TYPE"]))
+    else:
+        sys.exit('Failed! Add DISK_TYPE=<disk type> to your ' + args.config +
+                 ' file.\n')
+    if os.environ["DISK_SIZE"] is not None:
+        logging.debug('DISK_SIZE: ' + str(os.environ["DISK_SIZE"]))
+    else:
+        sys.exit('Failed! Add DISK_SIZE=<disk size in MB> to your ' +
+                 args.config + ' file.\n')
+    if os.environ["DISK_QTY"] is not None:
+        logging.debug('DISK_QTY: ' + str(os.environ["DISK_QTY"]))
+    else:
+        sys.exit('Failed! Add DISK_QTY=<num of drives> to your ' +
+                 args.config + ' file.\n')
+    if os.environ["GPADMIN_PW"] is not None:
+        logging.debug('GPADMIN_PW: ' + str(os.environ["GPADMIN_PW"]))
+    else:
+        sys.exit('Failed! Add GPADMIN_PW=<desired gpadmin password> to your ' +
+                 args.config + ' file.\n')
+    if os.environ["ROOT_PW"] is not None:
+        logging.debug('ROOT_PW: ' + str(os.environ["ROOT_PW"]))
+    else:
+        sys.exit('Failed! Add ROOT_PW=<desired root password> to your ' +
+                 args.config + ' file.\n')
+    if os.environ["PIVNET_APIKEY"] is not None:
+        logging.debug('PIVNET_APIKEY: ' + str(os.environ["PIVNET_APIKEY"]))
+    else:
+        sys.exit('Failed! Add PIVNET_APIKEY=<your pivnet key> to your ' +
+                 args.config + ' file.\n')
+    # Check params we will use to deploy GPDB
+    # Need to add a check for MADLIB_VERSION after Dan fixes it
+    if os.environ["BASE_HOME"] is not None:
+        logging.debug('BASE_HOME: ' + str(os.environ["BASE_HOME"]))
+    else:
+        sys.exit('Failed! Add BASE_HOME=<base path for data dirs> to your ' +
+                 args.config + ' file.\n')
+    if os.environ["SEGMENTDBS"] is not None:
+        logging.debug('SEGMENTDBS: ' + str(os.environ["SEGMENTDBS"]))
+        if os.environ["SEGMENTDBS"] < 16 and os.environ["SEGMENTDBS"] > 0:
+            logging.debug('SEGMENTDBS in valid range')
+        else:
+            sys.exit('Failed! Set SEGMENTDBS=<number between 1-16> in your ' +
+                     args.config + ' file.\n')
+    else:
+        sys.exit('Failed! Add SEGMENTDBS=<# of segs per node> to your ' +
+                 args.config + ' file.\n')
+    if os.environ["SEGMENTDBS"] < os.environ["DISK_QTY"]:
+        logging.debug('Failed Check: SEGMENTDBS less than DISK_QTY ')
+        sys.exit('Failed! You requested lesser segs per node ' +
+                 'than the number of drives per node.\n Change SEGMENTDBS ' +
+                 'to be equal to or greater than DISK_QTY.\n\n' +
+                 'Fix SEGMENTDBS=<# of segs per node> in your ' + args.config +
+                 ' file.\n')
+    if os.environ["STANDBY"] is not None \
+       and 'yes' or 'no' in os.environ["STANDBY"]:
+        logging.debug('STANDBY: ' + os.environ["STANDBY"])
+    else:
+        sys.exit('Failed! Add STANDBY=<yes|no> to your ' +
+                 args.config + ' file.\n')
+    if os.environ["ACCESS"] is not None \
+       and 'yes' or 'no' in os.environ["ACCESS"]:
+        logging.debug('ACCESS: ' + os.environ["ACCESS"])
+    else:
+        sys.exit('Failed! Add ACCESS=<yes|no> to your ' +
+                 args.config + ' file.\n')
+    if os.environ["STANDBY"] == os.environ["ACCESS"]:
+        logging.debug('STANDBY and ACCESS match')
+    else:
+        sys.exit('Failed! STANDBY and ACCESS do not match! ' +
+                 'Set them both to either yes or no in your ' +
+                 args.config + ' file.\n')
+
+
 def cliParse():
     VALID_ACTION = ["create", "destroy", "query", "stage", "dbctl"]
     parser = argparse.ArgumentParser(description='Cluster Automation for Pivotal Education')
@@ -93,8 +222,6 @@ def cliParse():
             load_dotenv(args.config)
             os.environ["CONFIGS_PATH"] = os.path.dirname(args.config) + '/'
             logging.debug('CONFIGS_PATH=' + os.environ["CONFIGS_PATH"])
-            for key in os.environ.keys():
-                logging.debug(key + '=' + str(os.environ[key]))
         clusterDictionary["clusterName"] = args.clustername
         clusterDictionary["nodeQty"] = args.nodes
         clusterDictionary["clusterType"] = "pivotal-" + args.type
@@ -102,11 +229,14 @@ def cliParse():
         clusterDictionary["masterCount"] = 0
         clusterDictionary["accessCount"] = 0
         clusterDictionary["segmentCount"] = 0
+        checkRequiredVars(args)
         if (args.type == "vanilla"):
+            logging.info("Creating a base Cluster:" + clusterDictionary["clusterName"])
+            logging.debug('With Dictionary: ' + json.dumps(clusterDictionary))
             ClusterBuilder.buildServers(clusterDictionary)
         elif (args.type == "gpdb"):
             print clusterDictionary["clusterName"] + ": Creating a Greenplum Database Cluster"
-            logging.debug("Creating a Greenplum Database Cluster:" + clusterDictionary["clusterName"])
+            logging.info("Creating a Greenplum Database Cluster:" + clusterDictionary["clusterName"])
             logging.debug('With Dictionary: ' + json.dumps(clusterDictionary))
             ClusterBuilder.buildServers(clusterDictionary)
             downloads = SoftwareDownload.downloadSoftware(clusterDictionary)
@@ -164,6 +294,7 @@ def cliParse():
             print "Loading Configuration"
             load_dotenv(args.config)
             os.environ["CONFIGS_PATH"] = os.path.dirname(args.config) + '/'
+            logging.debug('CONFIGS_PATH=' + os.environ["CONFIGS_PATH"])
         print clusterDictionary["clusterName"] + ": Querying Nodes in a Cluster"
         QueryCluster.checkServerState(clusterDictionary)
         stopTime = datetime.datetime.today()
@@ -178,6 +309,7 @@ def cliParse():
             print "Loading Configuration"
             load_dotenv(args.config)
             os.environ["CONFIGS_PATH"] = os.path.dirname(args.config) + '/'
+            logging.debug('CONFIGS_PATH=' + os.environ["CONFIGS_PATH"])
         print clusterDictionary["clusterName"] + ": Destroying Cluster"
         ClusterDestroyer.destroyServers(clusterDictionary)
         stopTime = datetime.datetime.today()
