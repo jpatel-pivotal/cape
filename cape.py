@@ -17,6 +17,13 @@ from LabBuilder import StudentAccounts
 
 def checkRequiredVars(args):
     logging.info('Checking Required Variables')
+    # Check Path Variables
+    if os.path.isabs(os.environ["CONFIGS_PATH"]):
+        logging.debug('CONFIGS_PATH is absolute')
+    else:
+        sys.exit('Failed! CONFIGS_PATH can not be a relative path. ' +
+                 'Re run with --config <aboslute path to your' +
+                 ' config.env file.\n')
     # Check cloud auth params
     if os.environ["PROJECT"] is not None:
         logging.debug('PROJECT: ' + str(os.environ["PROJECT"]))
