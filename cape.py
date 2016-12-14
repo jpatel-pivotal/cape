@@ -302,6 +302,7 @@ def cliParse():
             load_dotenv(args.config)
             os.environ["CONFIGS_PATH"] = os.path.dirname(args.config) + '/'
             logging.debug('CONFIGS_PATH=' + os.environ["CONFIGS_PATH"])
+            checkRequiredVars(args)
         print clusterDictionary["clusterName"] + ": Querying Nodes in a Cluster"
         QueryCluster.checkServerState(clusterDictionary)
         stopTime = datetime.datetime.today()
@@ -317,6 +318,7 @@ def cliParse():
             load_dotenv(args.config)
             os.environ["CONFIGS_PATH"] = os.path.dirname(args.config) + '/'
             logging.debug('CONFIGS_PATH=' + os.environ["CONFIGS_PATH"])
+            checkRequiredVars(args)
         print clusterDictionary["clusterName"] + ": Destroying Cluster"
         ClusterDestroyer.destroyServers(clusterDictionary)
         stopTime = datetime.datetime.today()
