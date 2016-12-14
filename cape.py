@@ -309,6 +309,7 @@ def cliParse():
             print "Loading Configuration"
             load_dotenv(args.config)
             os.environ["CONFIGS_PATH"] = os.path.dirname(args.config) + '/'
+            logging.debug('CONFIGS_PATH=' + os.environ["CONFIGS_PATH"])
         print clusterDictionary["clusterName"] + ": Destroying Cluster"
         ClusterDestroyer.destroyServers(clusterDictionary)
         stopTime = datetime.datetime.today()
