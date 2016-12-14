@@ -230,7 +230,6 @@ def cliParse():
         clusterDictionary["accessCount"] = 0
         clusterDictionary["segmentCount"] = 0
         checkRequiredVars(args)
-        exit()
         if (args.type == "vanilla"):
             logging.info("Creating a base Cluster:" + clusterDictionary["clusterName"])
             logging.debug('With Dictionary: ' + json.dumps(clusterDictionary))
