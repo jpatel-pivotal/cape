@@ -43,7 +43,7 @@ def destroyServers(clusterDictionary):
             print clusterDictionary["clusterName"] + ": We may have deleted \
                 more nodes than expected!! "
             logging.debug('nodeList: ' + str(len(nodeList)))
-            logging.debug('delnodes: '_ str(len(delnodes)))
+            logging.debug('delnodes: ' + str(len(delnodes)))
             print delnodes
         else:
             print clusterDictionary["clusterName"] + ": Destroyed Nodes"
