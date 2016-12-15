@@ -9,7 +9,6 @@ import logging
 from paramiko import WarningPolicy
 
 from LabBuilder import AccessHostPrepare
-from LabBuilder import StudentAccounts
 
 def installGPDB(clusterDictionary, downloads):
     print clusterDictionary["clusterName"] + ": Installing Greenplum Database on Cluster"
@@ -61,8 +60,6 @@ def installGPDB(clusterDictionary, downloads):
         x.join()
 
 
-
-
     print clusterDictionary["clusterName"] + ": Database Installation Complete"
     logging.info(clusterDictionary["clusterName"] + ': Database Installation Complete')
     print clusterDictionary["clusterName"] + ": Initializing Greenplum Database"
@@ -86,19 +83,11 @@ def installGPDB(clusterDictionary, downloads):
         print clusterDictionary["clusterName"] + ": Preparing Access Host "
         AccessHostPrepare.installComponents(clusterDictionary)
         print clusterDictionary["clusterName"] + ": Access Host Install Complete"
-        modifyPHGBA(masterNode)
+        #modifyPHGBA(masterNode)
+        modifyPHGBA(accessNode)
         print clusterDictionary["clusterName"] + ": Access Host configured to connect Complete"
 
     setGPADMINPW(masterNode)
-
-    # NEEDS TO BE OPTIONAL
-    # threads = []
-    # for clusterNode in clusterDictionary["clusterNodes"]:
-    #     addStudentAccountThread = threading.Thread(target=StudentAccounts.addStudentAccount, args=(clusterNode,))
-    #     threads.append(addStudentAccountThread)
-    #     addStudentAccountThread.start()
-    # for x in threads:
-    #     x.join()
 
 
 def installComponents(masterNode, downloads):
@@ -237,8 +226,6 @@ def verifyInstall(masterNode, clusterDictionary):
                 print "Failing Process: Please Verify Database Manually."
                 exit()
 
-####  WOULD RATHER THIS GO IN ACCESS HOST PREPARE AND THEN RENAME IT TO ENABLEDATASCIENCE
-#####
 
 def installDSPackages(clusterNode):
     logging.info('installDSPackages Started on: ' + str(clusterNode["nodeName"]))
@@ -264,14 +251,14 @@ def installDSPackages(clusterNode):
             # INSTALL PIP FOR GP-PYTHON
             logging.info('Installing pip')
             (stdin, stdout, stderr) = ssh.exec_command("wget https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py;python /tmp/get-pip.py --no-cache-dir")
-            logigng.debug(stdout.readlines())
-            logigng.debug(stderr.readlines())
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
 
             # INSTALL NUMPY
             logging.info('Installing numpy')
             (stdin, stdout, stderr) = ssh.exec_command("pip install numpy==1.9.3 -U --no-cache-dir")
             logging.debug(stdout.readlines())
-            logign.debug(stderr.readlines())
+            logging.debug(stderr.readlines())
 
             # INSTALL SCIPY
             logging.info('Installing scipy')
@@ -466,11 +453,11 @@ def modifyPHGBA(masterNode):
             logging.debug('SSH IP: ' + masterNode["externalIP"] +
                           ' User: gpadmin')
             ssh.connect(masterNode["externalIP"], 22, "gpadmin", str(os.environ["GPADMIN_PW"]), timeout=120)
-            logging.info('allowing access')
-            (stdin, stdout, stderr) = ssh.exec_command(
-                "echo 'host all gpadmin " + accessNode['internalIP'] + "/0 md5' >> /data/master/gpseg-1/pg_hba.conf")
-            logging.debug(stdout.readlines())
-            logging.debug(stderr.readlines())
+            #logging.info('allowing access')
+            #(stdin, stdout, stderr) = ssh.exec_command(
+             #   "echo 'host all gpadmin " + accessNode['internalIP'] + "/0 md5' >> /data/master/gpseg-1/pg_hba.conf")
+            #logging.debug(stdout.readlines())
+            #logging.debug(stderr.readlines())
             logging.info('Restarting DB')
             (stdin, stdout, stderr) = ssh.exec_command("gpstop -a -r")
             logging.debug(stdout.readlines())
