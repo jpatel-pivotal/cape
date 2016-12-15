@@ -12,7 +12,6 @@ from ClusterBuilder import InstallGPDB
 from ClusterBuilder import SoftwareDownload
 from ClusterDestroyer import ClusterDestroyer
 from QueryCluster import QueryCluster
-from LabBuilder import StudentAccounts
 
 
 def checkRequiredVars(args):
@@ -257,38 +256,6 @@ def cliParse():
             print "HDB Builder"
             ClusterBuilder.buildServers(clusterDictionary)
             SoftwareDownload.downloadSoftware(clusterDictionary)
-            #StudentAccounts.add(clusterDictionary)
-
-            # if (args.verbose == True):
-            #     clusterNodes = ClusterBuilder.buildServers(config)
-            #     #createCluster(clusterDictionary,False)  #These are opposite because  the logging value is quiet_stdout so True is no logging
-            #
-            # else:
-            #     ClusterBuilder.buildServers(clusterDictionary,config)
-            #
-            #    # createCluster(clusterDictionary,True)
-
-            # elif (args.subparser_name == "destroy"):
-            #     clusterDictionary["clusterName"] = args.clustername
-            #     print "Not Yet Implemented"
-            # elif (args.subparser_name == "query"):
-            #     clusterInfo = queryCluster(args.clustername)
-            #
-            #
-            # elif (args.subparser_name == "stage"):
-            #     clusterInfo = queryCluster(args.clustername)
-            #     # TEMPORARY    REMOVE!!!
-            #     # with open("./" + clusterInfo["name"] + "/clusterInfo.json") as clusterInfoFile:
-            #     #     clusterInfo = json.load(clusterInfoFile)
-            #     #downloadSoftware(clusterDictionary, "pivotal-gpdb")
-            #
-            #     stageCluster(clusterInfo)
-            #
-            # elif (args.subparser_name == "gpdb"):
-            #     clusterName = (args.clustername)
-            #     with open("./" + clusterName + "/clusterInfo.json") as clusterInfoFile:
-            #         clusterInfo = json.load(clusterInfoFile)
-            #     Users.gpControl(clusterInfo,args.action)
             stopTime = datetime.datetime.today()
             print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
             logging.debug("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
