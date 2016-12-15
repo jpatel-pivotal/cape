@@ -6,7 +6,6 @@ import logging
 from libcloud.compute.providers import get_driver
 from libcloud.compute.types import Provider
 from libcloud.compute.base import Node as node
-from libcloud.compute.drivers.dummy import DummyNodeDriver
 
 
 def destroyServers(clusterDictionary):
