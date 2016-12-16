@@ -22,20 +22,22 @@ check_args() {
 }
 
 setupDisk(){
-echo "Setup $1 Disk/s with RAID0: $2"
-sudo yum -y install xfsprogs xfsdump
+
+if [ "$2" == "no" ]; then
+  echo "Setup $1 Disk/s with RAID0: $2"
+  sudo yum -y install xfsprogs xfsdump
 
 
-for d in $(seq 1 $1)
-do
-  sudo mkdir -p /data/disk$d
-done
-cnt=1
-echo $1
-for c in {b..z}
-do
-  echo $c
-sudo fdisk /dev/sd$c <<EOF
+  for d in $(seq 1 $1)
+  do
+    sudo mkdir -p /data/disk$d
+  done
+  cnt=1
+  echo $1
+  for c in {b..z}
+  do
+    echo $c
+    sudo fdisk /dev/sd$c <<EOF
 n
 p
 1
@@ -44,17 +46,18 @@ p
 w
 EOF
 #sudo sh -c 'echo "LABEL=data$cnt /data/data$cnt xfs rw,noatime,inode64,allocsize=16m 0 0" >> /etc/fstab'
-  echo $cnt
-  echo "MAKEFS"
-  echo "/dev/sd$c -L data$cnt"
-  sudo mkfs.xfs -f /dev/sd$c -L data$cnt
-  sudo echo deadline > /sys/block/sd$c/queue/scheduler
-  sudo /sbin/blockdev --setra 16384 /dev/sd$c
-  ((++cnt > $1)) && break
-done
-sudo sh -c 'cat /tmp/fstab.cape >> /etc/fstab'
+    echo $cnt
+    echo "MAKEFS"
+    echo "/dev/sd$c -L data$cnt"
+    sudo mkfs.xfs -f /dev/sd$c -L data$cnt
+    sudo echo deadline > /sys/block/sd$c/queue/scheduler
+    sudo /sbin/blockdev --setra 16384 /dev/sd$c
+    ((++cnt > $1)) && break
+  done
+fi
 
 if [ "$2" == "yes" ]; then
+  echo "Setup $1 Disk/s with RAID0: $2"
   # Calculate how many volumes to create
   echo "Calculating how many volumes to use"
   if [[ "$1" -lt 8 ]]; then
@@ -92,6 +95,8 @@ if [ "$2" == "yes" ]; then
   sudo mount -a
 
 fi
+# Write fstab file
+sudo sh -c 'cat /tmp/fstab.cape >> /etc/fstab'
 # Configure 50GB swap file on boot disk for all nodes
 sudo fallocate -l 50g /swapfile
 sudo chmod 600 /swapfile
