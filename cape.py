@@ -115,10 +115,10 @@ def checkRequiredVars(args):
                  args.config + ' file.\n')
     if os.environ["SEGMENTDBS"] is not None:
         logging.debug('SEGMENTDBS: ' + str(os.environ["SEGMENTDBS"]))
-        if os.environ["SEGMENTDBS"] < 16 and os.environ["SEGMENTDBS"] > 0:
+        if int(os.environ["SEGMENTDBS"]) < 16 and int(os.environ["SEGMENTDBS"]) > 0:
             logging.debug('SEGMENTDBS in valid range')
         else:
-            sys.exit('Failed! Set SEGMENTDBS=<number between 1-16> in your ' +
+            sys.exit('Failed! Invalid Value: Set SEGMENTDBS=<number between 1-16> in your ' +
                      args.config + ' file.\n')
     else:
         sys.exit('Failed! Add SEGMENTDBS=<# of segs per node> to your ' +
