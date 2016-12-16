@@ -77,19 +77,19 @@ if [ "$2" == "yes" ]; then
 
   umount ${DRIVES[*]} || true
 
-  mdadm --stop /dev/md[0-9]* || true
+  sudo mdadm --stop /dev/md[0-9]* || true
 
-  mdadm --zero-superblock ${DRIVES[*]}
+  sudo mdadm --zero-superblock ${DRIVES[*]}
 
   for VOLUME in $(seq $VOLUMES); do
     DPV=$(expr "$DRIVE_COUNT" "/" "$VOLUMES")
-    DRIVE_SET=($(ls ${DRIVE_PATTERN} | head -n $(expr "$DPV" "*" "$VOLUME") | tail -n "$DPV"))
-    mdadm --create /dev/md${VOLUME} --run --level 0 --chunk 256K --raid-devices=${#DRIVE_SET[@]} ${DRIVE_SET[*]} --force
+    DRIVE_SET=($(ls /dev/sd[c-z] | head -n $(expr "$DPV" "*" "$VOLUME") | tail -n "$DPV"))
+    sudo mdadm --create /dev/md${VOLUME} --run --level 0 --chunk 256K --raid-devices=${#DRIVE_SET[@]} ${DRIVE_SET[*]} --force
     mkfs.xfs -f /dev/md${VOLUME}
     mkdir -p /data${VOLUME}
   done
-  mdadm --detail --scan > /etc/mdadm.conf
-  mount -a
+  sudo mdadm --detail --scan > /etc/mdadm.conf
+  sudo mount -a
 
 fi
 # Configure 50GB swap file on boot disk for all nodes
@@ -114,7 +114,7 @@ securitySetup(){
 networkSetup(){
     sudo sed -i 's|[#]*PasswordAuthentication no|PasswordAuthentication yes|g' /etc/ssh/sshd_config
     sudo sed -i 's|PermitRootLogin no|PermitRootLogin yes|g' /etc/ssh/sshd_config
-        sudo sed -i 's|UsePAM no|UsePAM yes|g' /etc/ssh/sshd_config
+    sudo sed -i 's|UsePAM no|UsePAM yes|g' /etc/ssh/sshd_config
 
     #sudo sh -c "echo 'Defaults \!requiretty' > /etc/sudoers.d/888-dont-requiretty"
     sudo sh -c "cat '/tmp/sysctl.conf.cape' >> /etc/sysctl.conf"
@@ -146,6 +146,7 @@ serverSetup(){
 
 
 _main() {
+    echo "prepareHost.sh received args: $@"
     check_args
     securitySetup
     networkSetup
