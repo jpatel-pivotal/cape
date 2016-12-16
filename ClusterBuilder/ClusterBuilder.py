@@ -177,7 +177,7 @@ def buildFSTAB(clusterDictionary,diskCNT):
 
 
 def prepServer(clusterDictionary,clusterNode, nodeCnt):
-    logging.debug('prepServer Started')
+    logging.debug('prepServer Started on '+clusterNode["nodeName"])
     warnings.simplefilter("ignore")
     logging.debug('SimpleFilter for Warnings: ignore')
     paramiko.util.log_to_file("/tmp/paramiko.log")
@@ -242,7 +242,18 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
             logging.debug(stderr.readlines())
             logging.debug('Making prepareHost executable and running it')
             ssh.exec_command("sudo chmod +x /tmp/prepareHost.sh")
+<<<<<<< HEAD
             (stdin, stdout, stderr) = ssh.exec_command("/tmp/prepareHost.sh " + os.environ["DISK_QTY"] + os.environ["RAID0"] +" &> /tmp/prepareHost.log")
+=======
+            logging.debug('Starting prepServer script on ' + clusterNode["nodeName"])
+            (stdin, stdout, stderr) = ssh.exec_command("/tmp/prepareHost.sh " + os.environ["DISK_QTY"] + " &> /tmp/prepareHost.log")
+            logging.debug('Completed prepServer script on ' + clusterNode["nodeName"])
+
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
+            logging.debug("Making /data and mounting drives")
+            (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir /data;sudo mount -a")
+>>>>>>> upstream/master
             logging.debug(stdout.readlines())
             logging.debug(stderr.readlines())
             homeDir = os.environ["BASE_HOME"] + "/home"
@@ -274,7 +285,7 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
                 exit()
         finally:
             ssh.close()
-            logging.debug('prepServer Completed')
+            logging.debug('prepServer Completed on '+clusterNode["nodeName"])
     return
 
 
