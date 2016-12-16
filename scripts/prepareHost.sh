@@ -86,7 +86,7 @@ if [ "$2" == "yes" ]; then
     DRIVE_SET=($(ls /dev/sd[c-z] | head -n $(expr "$DPV" "*" "$VOLUME") | tail -n "$DPV"))
     sudo mdadm --create /dev/md${VOLUME} --run --level 0 --chunk 256K --raid-devices=${#DRIVE_SET[@]} ${DRIVE_SET[*]} --force
     mkfs.xfs -f /dev/md${VOLUME}
-    mkdir -p /data${VOLUME}
+    sudo mkdir -p /data${VOLUME}
   done
   sudo mdadm --detail --scan > /etc/mdadm.conf
   sudo mount -a
