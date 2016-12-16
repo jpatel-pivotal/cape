@@ -147,7 +147,7 @@ serverSetup(){
 
 _main() {
     echo "prepareHost.sh received args: $@"
-    check_args
+    check_args $1 $2
     securitySetup
     networkSetup
     setupDisk $1 $2
