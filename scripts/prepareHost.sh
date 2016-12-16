@@ -77,9 +77,9 @@ if [ "$2" == "yes" ]; then
   DRIVES=($(ls /dev/sd[b-z]))
   DRIVE_COUNT=${#DRIVES[@]}
 
-  umount /dev/md[0-9]* || true
+  sudo umount /dev/md[0-9]* || true
 
-  umount ${DRIVES[*]} || true
+  sudo umount ${DRIVES[*]} || true
 
   sudo mdadm --stop /dev/md[0-9]* || true
 
@@ -89,7 +89,7 @@ if [ "$2" == "yes" ]; then
     DPV=$(expr "$DRIVE_COUNT" "/" "$VOLUMES")
     DRIVE_SET=($(ls /dev/sd[b-z] | head -n $(expr "$DPV" "*" "$VOLUME") | tail -n "$DPV"))
     sudo mdadm --create /dev/md${VOLUME} --run --level 0 --chunk 256K --raid-devices=${#DRIVE_SET[@]} ${DRIVE_SET[*]} --force
-    mkfs.xfs -f /dev/md${VOLUME}
+    sudo mkfs.xfs -f /dev/md${VOLUME}
     sudo mkdir -p /data${VOLUME}
   done
   sudo mdadm --detail --scan > /etc/mdadm.conf

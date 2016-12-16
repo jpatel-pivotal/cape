@@ -248,6 +248,9 @@ def cliParse():
             ClusterBuilder.buildServers(clusterDictionary)
             stopTime = datetime.datetime.today()
             print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
+            logging.info("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
+            print  "Elapsed Time: ", stopTime - startTime
+            logging.info('Elapsed Time: ' + str(stopTime - startTime))
         elif (args.type == "gpdb"):
             print clusterDictionary["clusterName"] + ": Creating a Greenplum Database Cluster"
             logging.info("Creating a Greenplum Database Cluster:" + clusterDictionary["clusterName"])
@@ -257,7 +260,7 @@ def cliParse():
             InstallGPDB.installGPDB(clusterDictionary, downloads)
             stopTime = datetime.datetime.today()
             print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
-            logging.debug("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
+            logging.info("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
             print  "Elapsed Time: ", stopTime - startTime
             logging.info('Elapsed Time: ' + str(stopTime - startTime))
         elif (args.type == "hdb"):
@@ -266,7 +269,7 @@ def cliParse():
             SoftwareDownload.downloadSoftware(clusterDictionary)
             stopTime = datetime.datetime.today()
             print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
-            logging.debug("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
+            logging.info("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
             print  "Elapsed Time: ", stopTime - startTime
             logging.info('Elapsed Time: ' + str(stopTime - startTime))
     elif (args.subparser_name == "query"):
@@ -282,7 +285,7 @@ def cliParse():
         QueryCluster.checkServerState(clusterDictionary)
         stopTime = datetime.datetime.today()
         print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
-        logging.debug("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
+        logging.info("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
         print  "Elapsed Time: ", stopTime - startTime
         logging.info('Elapsed Time: ' + str(stopTime - startTime))
     elif (args.subparser_name == "destroy"):
@@ -298,7 +301,7 @@ def cliParse():
         ClusterDestroyer.destroyServers(clusterDictionary)
         stopTime = datetime.datetime.today()
         print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
-        logging.debug("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
+        logging.info("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
         print  "Elapsed Time: ", stopTime - startTime
         logging.info('Elapsed Time: ' + str(stopTime - startTime))
 
