@@ -18,6 +18,7 @@ check_args() {
   if [ -z "$2" ]; then
     echo "Failed! Did not get a value for RAID0"
     exit 1
+  fi
 }
 
 setupDisk(){

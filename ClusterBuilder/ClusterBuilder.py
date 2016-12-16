@@ -493,6 +493,8 @@ def getNodeFQDN(clusterDictionary):
             ssh.set_missing_host_key_policy(WarningPolicy())
             for node in clusterDictionary["clusterNodes"]:
                 logging.debug('Connecting to ' + node["nodeName"])
+                logging.debug('SSH IP: ' + node["externalIP"] +
+                              ' User: gpadmin')
                 ssh.connect(node["externalIP"], 22, "gpadmin", password=str(os.environ["GPADMIN_PW"]), timeout=120)
                 (stdin, stdout, stderr) = ssh.exec_command("hostname -f ")
                 fqdn = stdout.read()
