@@ -136,7 +136,9 @@ def buildServers(clusterDictionary):
         logging.debug('Exception: ' + str(e.__class__))
         logging.debug('Exception: ' + str(e))
         # look at how we can incorporate this into logging exceptions
-        # logging.debug(traceback.print_exception(e, ))
+        # exc_type, exc_value, exc_traceback = sys.exc_info()
+        # logging.debug(traceback.print_exception(exc_type, exc_value,
+        #              exc_traceback))
         logging.debug(traceback.print_exc())
         logging.debug('Failed')
         print "Failing Process"
@@ -159,10 +161,10 @@ def buildFSTAB(clusterDictionary,diskCNT):
         else:
             logging.info('Configuring with RAID0 as RAID0=' + str(os.environ["RAID0"]))
             if diskCNT < 8:
-                logging.debug('Created fstab for 1 volume')
-                fstabFile.write("/dev/md1" + " /data1"+str(disk) + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
+                logging.debug('Creating fstab for 1 volume')
+                fstabFile.write("/dev/md1" + " /data1" + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
             else:
-                logging.debug('Created fstab for 2 volumes')
+                logging.debug('Creating fstab for 2 volumes')
                 fstabFile.write("/dev/md1" + " /data1" + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
                 fstabFile.write("/dev/md2" + " /data2" + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
 
