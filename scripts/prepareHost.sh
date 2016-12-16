@@ -22,8 +22,11 @@ check_args() {
 }
 
 setupDisk(){
-
+# Write fstab file
+sudo sh -c 'cat /etc/fstab >> /etc/ORIG.fstab'
+sudo sh -c 'cat /tmp/fstab.cape >> /etc/fstab'
 sudo yum -y install xfsprogs xfsdump
+
 if [ "$2" == "no" ]; then
   echo "Setup $1 Disk/s with RAID0: $2"
 
@@ -92,12 +95,11 @@ if [ "$2" == "yes" ]; then
     sudo mkfs.xfs -f /dev/md${VOLUME}
     sudo mkdir -p /data${VOLUME}
   done
-  sudo mdadm --detail --scan > /etc/mdadm.conf
+  sudo sh -c 'mdadm --detail --scan > /etc/mdadm.conf'
   sudo mount -a
 
 fi
-# Write fstab file
-sudo sh -c 'cat /tmp/fstab.cape >> /etc/fstab'
+
 # Configure 50GB swap file on boot disk for all nodes
 sudo fallocate -l 50g /swapfile
 sudo chmod 600 /swapfile
