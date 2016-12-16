@@ -40,100 +40,110 @@ def buildServers(clusterDictionary):
         else:
             print "Cluster Name already exists."
             logging.error("Cluster Name already exists. Exiting!")
-    clusterPath = str(os.environ["CAPE_HOME"]) + "/clusterConfigs/" + clusterDictionary["clusterName"]
-    logging.debug("ClusterPath: " + str(clusterPath))
+    try:
+        clusterPath = str(os.environ["CAPE_HOME"]) + "/clusterConfigs/" + clusterDictionary["clusterName"]
+        logging.debug("ClusterPath: " + str(clusterPath))
 
-    clusterNodes = []
-    logging.debug('Will create ' + str(clusterDictionary["nodeQty"]) +
-                  ' Nodes with Info below:')
-    logging.debug('SVC_ACCOUNT: ' + str(os.environ["SVC_ACCOUNT"]))
-    logging.debug('CONFIGS_PATH: '+ str(os.environ["CONFIGS_PATH"]))
-    logging.debug('SVC_ACCOUNT_KEY: ' + str(os.environ["SVC_ACCOUNT_KEY"]))
-    logging.debug('PROJECT: ' + str(os.environ["PROJECT"]))
-    logging.debug('DATACENTER: ' + str(os.environ["ZONE"]))
-    logging.debug('DISK_TYPE: ' + str(os.environ["DISK_TYPE"]))
-    logging.debug('SERVER_TYPE: ' + str(os.environ["SERVER_TYPE"]))
+        clusterNodes = []
+        logging.debug('Will create ' + str(clusterDictionary["nodeQty"]) +
+                      ' Nodes with Info below:')
+        logging.debug('SVC_ACCOUNT: ' + str(os.environ["SVC_ACCOUNT"]))
+        logging.debug('CONFIGS_PATH: '+ str(os.environ["CONFIGS_PATH"]))
+        logging.debug('SVC_ACCOUNT_KEY: ' + str(os.environ["SVC_ACCOUNT_KEY"]))
+        logging.debug('PROJECT: ' + str(os.environ["PROJECT"]))
+        logging.debug('DATACENTER: ' + str(os.environ["ZONE"]))
+        logging.debug('DISK_TYPE: ' + str(os.environ["DISK_TYPE"]))
+        logging.debug('SERVER_TYPE: ' + str(os.environ["SERVER_TYPE"]))
 
-    ComputeEngine = get_driver(Provider.GCE)
-    driver = ComputeEngine(os.environ["SVC_ACCOUNT"], str(os.environ["CONFIGS_PATH"]) + str(os.environ["SVC_ACCOUNT_KEY"]), project=str(os.environ["PROJECT"]), datacenter=str(os.environ["ZONE"]))
-    gce_disk_struct = [
-        {
-            "kind": "compute#attachedDisk",
-            "boot": True,
-            "autoDelete": True,
+        ComputeEngine = get_driver(Provider.GCE)
+        driver = ComputeEngine(os.environ["SVC_ACCOUNT"], str(os.environ["CONFIGS_PATH"]) + str(os.environ["SVC_ACCOUNT_KEY"]), project=str(os.environ["PROJECT"]), datacenter=str(os.environ["ZONE"]))
+        gce_disk_struct = [
+            {
+                "kind": "compute#attachedDisk",
+                "boot": True,
+                "autoDelete": True,
 
-            'initializeParams': {
-                "sourceImage": "/projects/centos-cloud/global/images/" + str(os.environ["IMAGE"]),
-                "diskSizeGb": 100,
-                "diskStorageType": str(os.environ["DISK_TYPE"]),
-                "diskType": "/compute/v1/projects/" + str(os.environ["PROJECT"]) + "/zones/" + str(
-                    os.environ["ZONE"]) + "/diskTypes/" + str(os.environ["DISK_TYPE"])
-            },
-        }
+                'initializeParams': {
+                    "sourceImage": "/projects/centos-cloud/global/images/" + str(os.environ["IMAGE"]),
+                    "diskSizeGb": 100,
+                    "diskStorageType": str(os.environ["DISK_TYPE"]),
+                    "diskType": "/compute/v1/projects/" + str(os.environ["PROJECT"]) + "/zones/" + str(
+                        os.environ["ZONE"]) + "/diskTypes/" + str(os.environ["DISK_TYPE"])
+                },
+            }
 
-    ]
-    sa_scopes = [{'scopes': ['compute', 'storage-full']}]
-    print clusterDictionary["clusterName"] + ": Creating " + str(clusterDictionary["nodeQty"]) + " Nodes"
-    nodes = driver.ex_create_multiple_nodes(base_name=clusterDictionary["clusterName"],
-                                            size=str(os.environ["SERVER_TYPE"]), image=None,
-                                            number=int(clusterDictionary["nodeQty"]),
-                                            location=str(os.environ["ZONE"]),
-                                            ex_network='default', ex_tags=None, ex_metadata=None, ignore_errors=True,
-                                            use_existing_disk=False, poll_interval=2, external_ip='ephemeral',
-                                            ex_service_accounts=None, timeout=180, description=None,
-                                            ex_can_ip_forward=None, ex_disks_gce_struct=gce_disk_struct,
-                                            ex_nic_gce_struct=None, ex_on_host_maintenance=None,
-                                            ex_automatic_restart=None)
+        ]
+        sa_scopes = [{'scopes': ['compute', 'storage-full']}]
+        print clusterDictionary["clusterName"] + ": Creating " + str(clusterDictionary["nodeQty"]) + " Nodes"
+        nodes = driver.ex_create_multiple_nodes(base_name=clusterDictionary["clusterName"],
+                                                size=str(os.environ["SERVER_TYPE"]), image=None,
+                                                number=int(clusterDictionary["nodeQty"]),
+                                                location=str(os.environ["ZONE"]),
+                                                ex_network='default', ex_tags=None, ex_metadata=None, ignore_errors=True,
+                                                use_existing_disk=False, poll_interval=2, external_ip='ephemeral',
+                                                ex_service_accounts=None, timeout=180, description=None,
+                                                ex_can_ip_forward=None, ex_disks_gce_struct=gce_disk_struct,
+                                                ex_nic_gce_struct=None, ex_on_host_maintenance=None,
+                                                ex_automatic_restart=None)
 
-    print clusterDictionary["clusterName"] + ": Cluster Nodes Created in Google Cloud"
-    logging.info(clusterDictionary["clusterName"] + ": Cluster Nodes Created in Google Cloud")
-    print clusterDictionary["clusterName"] + ": Cluster Configuration Started"
-    logging.info(clusterDictionary["clusterName"] + ": Cluster Configuration Started")
+        print clusterDictionary["clusterName"] + ": Cluster Nodes Created in Google Cloud"
+        logging.info(clusterDictionary["clusterName"] + ": Cluster Nodes Created in Google Cloud")
+        print clusterDictionary["clusterName"] + ": Cluster Configuration Started"
+        logging.info(clusterDictionary["clusterName"] + ": Cluster Configuration Started")
 
-    threads = []
-    buildFSTAB(clusterDictionary, int(os.environ["DISK_QTY"]))
-    for nodeCnt in range(int(clusterDictionary["nodeQty"])):
-        nodeName = clusterDictionary["clusterName"] + "-" + str(nodeCnt).zfill(3)
-        clusterNode = {}
+        threads = []
+        buildFSTAB(clusterDictionary, int(os.environ["DISK_QTY"]))
+        for nodeCnt in range(int(clusterDictionary["nodeQty"])):
+            nodeName = clusterDictionary["clusterName"] + "-" + str(nodeCnt).zfill(3)
+            clusterNode = {}
 
         #### THIS SECTION CAN BE MODIFIED TO TAKE A VARIABLE AND MOUNT MULTIPLE DISKS INSTEAD OF 1
         ####  MOUNTS SHOULD GO UNDER /DATA AND BE DATA1,DATA2,DATAN
         ####  THIS MEANS THE 1 DISK USE CASE SHOULD BE MOUNTED THE SAME WAY.
 
-        for diskNum in range(1,int(os.environ["DISK_QTY"])+1):
-            volume = driver.create_volume(os.environ["DISK_SIZE"], nodeName + "-data-disk-"+str(diskNum), None, None,
-                                      None, False, "pd-standard")
+            for diskNum in range(1,int(os.environ["DISK_QTY"])+1):
+                volume = driver.create_volume(os.environ["DISK_SIZE"], nodeName + "-data-disk-"+str(diskNum), None, None,
+                                              None, False, "pd-standard")
 
-            clusterNode["nodeName"] = nodeName
-            clusterNode["dataVolume"] = str(volume)
+                clusterNode["nodeName"] = nodeName
+                clusterNode["dataVolume"] = str(volume)
 
-            node = driver.ex_get_node(nodeName)
-            driver.attach_volume(node, volume, device=None, ex_mode=None, ex_boot=False, ex_type=None, ex_source=None,
-                             ex_auto_delete=True, ex_initialize_params=None, ex_licenses=None, ex_interface=None)
-        clusterNode["externalIP"] = str(node).split(",")[3].split("'")[1]
-        clusterNode["internalIP"] = str(node).split(",")[4].split("'")[1]
-        print "     " + nodeName + ": External IP: " + clusterNode["externalIP"]
-        print "     " + nodeName + ": Internal IP: " + clusterNode["internalIP"]
-        logging.debug('Created Node: ' + str(clusterNode))
+                node = driver.ex_get_node(nodeName)
+                driver.attach_volume(node, volume, device=None, ex_mode=None, ex_boot=False, ex_type=None, ex_source=None,
+                                     ex_auto_delete=True, ex_initialize_params=None, ex_licenses=None, ex_interface=None)
+            clusterNode["externalIP"] = str(node).split(",")[3].split("'")[1]
+            clusterNode["internalIP"] = str(node).split(",")[4].split("'")[1]
+            print "     " + nodeName + ": External IP: " + clusterNode["externalIP"]
+            print "     " + nodeName + ": Internal IP: " + clusterNode["internalIP"]
+            logging.debug('Created Node: ' + str(clusterNode))
 
-        prepThread = threading.Thread(target=prepServer, args=(clusterDictionary,clusterNode, nodeCnt))
-        clusterNodes.append(clusterNode)
-        threads.append(prepThread)
-        prepThread.start()
-    for x in threads:
-        x.join()
-    print clusterDictionary["clusterName"] + ": Cluster Configuration Complete"
-    logging.info(clusterDictionary["clusterName"] + ": Cluster Configuration Complete")
-    clusterDictionary["clusterNodes"] = clusterNodes
-    logging.debug('ClusterNodes: ' + json.dumps(clusterDictionary["clusterNodes"]))
-    getNodeFQDN(clusterDictionary)
-    logging.debug(json.dumps(clusterDictionary))
-    hostsFiles(clusterDictionary)
-    keyShare(clusterDictionary)
-    logging.debug('buildServers Completed')
+            prepThread = threading.Thread(target=prepServer, args=(clusterDictionary,clusterNode, nodeCnt))
+            clusterNodes.append(clusterNode)
+            threads.append(prepThread)
+            prepThread.start()
+        for x in threads:
+            x.join()
+        print clusterDictionary["clusterName"] + ": Cluster Configuration Complete"
+        logging.info(clusterDictionary["clusterName"] + ": Cluster Configuration Complete")
+        clusterDictionary["clusterNodes"] = clusterNodes
+        logging.debug('ClusterNodes: ' + json.dumps(clusterDictionary["clusterNodes"]))
+        getNodeFQDN(clusterDictionary)
+        logging.debug(json.dumps(clusterDictionary))
+        hostsFiles(clusterDictionary)
+        keyShare(clusterDictionary)
+        logging.debug('buildServers Completed')
+    except Exception as e:
+        logging.debug('Exception: ' + str(e.__class__))
+        logging.debug('Exception: ' + str(e))
+        # look at how we can incorporate this into logging exceptions
+        # logging.debug(traceback.print_exception(e, ))
+        logging.debug(traceback.print_exc())
+        logging.debug('Failed')
+        print "Failing Process"
+        exit()
 
 def buildFSTAB(clusterDictionary,diskCNT):
-    logging.debug('buildFSTAB Started')
+    logging.debug('buildFSTAB Started with ' + str(diskCNT) + ' Drives')
     clusterPath = str(os.environ["CAPE_HOME"]) + "/clusterConfigs/" + clusterDictionary["clusterName"]
     currentPath = os.getcwd()
     logging.debug('Current Dir: ' + currentPath)
@@ -142,8 +152,20 @@ def buildFSTAB(clusterDictionary,diskCNT):
     with open("fstab.cape", "w") as fstabFile:
         fstabFile.write("######  CAPE ENTRIES #######\n")
         fstabFile.write("/swapfile    swap     swap    defaults     0 0\n")
-        for disk in range(1,diskCNT+1):
-            fstabFile.write("LABEL=data"+str(disk)+ "   /data/disk"+str(disk) + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
+        if os.environ["RAID0"] == "no":
+            logging.info('Configuring with no RAID as RAID0=' + str(os.environ["RAID0"]))
+            for disk in range(1,diskCNT+1):
+                fstabFile.write("LABEL=data"+str(disk)+ "   /data/disk"+str(disk) + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
+        else:
+            logging.info('Configuring with RAID0 as RAID0=' + str(os.environ["RAID0"]))
+            if diskCNT < 8:
+                logging.debug('Created fstab for 1 volume')
+                fstabFile.write("/dev/md1" + " /data1"+str(disk) + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
+            else:
+                logging.debug('Created fstab for 2 volumes')
+                fstabFile.write("/dev/md1" + " /data1" + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
+                fstabFile.write("/dev/md2" + " /data2" + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
+
     logging.info('Wrote fstab file')
     os.chdir(currentPath)
     logging.debug('Changed Dir to: ' + currentPath)
@@ -212,17 +234,13 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
 
             time.sleep(10)
 
-            logging.debug('Createing user root')
+            logging.debug('Creating user root')
             (stdin, stdout, stderr) = ssh.exec_command("sudo echo " + os.environ["ROOT_PW"] + " | sudo passwd --stdin root")
             logging.debug(stdout.readlines())
             logging.debug(stderr.readlines())
-            logging.debug('Making prepareHost executable')
+            logging.debug('Making prepareHost executable and running it')
             ssh.exec_command("sudo chmod +x /tmp/prepareHost.sh")
-            (stdin, stdout, stderr) = ssh.exec_command("/tmp/prepareHost.sh " + os.environ["DISK_QTY"] + " &> /tmp/prepareHost.log")
-            logging.debug(stdout.readlines())
-            logging.debug(stderr.readlines())
-            logging.debug("Making /data and mounting drives")
-            (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir /data;sudo mount -a")
+            (stdin, stdout, stderr) = ssh.exec_command("/tmp/prepareHost.sh " + os.environ["DISK_QTY"] + os.environ["RAID0"] +" &> /tmp/prepareHost.log")
             logging.debug(stdout.readlines())
             logging.debug(stderr.readlines())
             homeDir = os.environ["BASE_HOME"] + "/home"

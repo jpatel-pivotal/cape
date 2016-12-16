@@ -9,14 +9,25 @@
 #}
 
 
+check_args() {
+  if [ -z "$1" ]; then
+    echo "Failed! Did not get number of drives"
+    exit 1
+  fi
+
+  if [ -z "$2" ]; then
+    echo "Failed! Did not get a value for RAID0"
+    exit 1
+}
 
 setupDisk(){
-echo "Setup Disk"
+echo "Setup $1 Disk/s with RAID0: $2"
 sudo yum -y install xfsprogs xfsdump
+
 
 for d in $(seq 1 $1)
 do
-    sudo mkdir -p /data/disk$d
+  sudo mkdir -p /data/disk$d
 done
 cnt=1
 echo $1
@@ -32,16 +43,54 @@ p
 w
 EOF
 #sudo sh -c 'echo "LABEL=data$cnt /data/data$cnt xfs rw,noatime,inode64,allocsize=16m 0 0" >> /etc/fstab'
-echo $cnt
-echo "MAKEFS"
-echo "/dev/sd$c -L data$cnt"
-sudo mkfs.xfs -f /dev/sd$c -L data$cnt
-sudo echo deadline > /sys/block/sd$c/queue/scheduler
-sudo /sbin/blockdev --setra 16384 /dev/sd$c
-((++cnt > $1)) && break
+  echo $cnt
+  echo "MAKEFS"
+  echo "/dev/sd$c -L data$cnt"
+  sudo mkfs.xfs -f /dev/sd$c -L data$cnt
+  sudo echo deadline > /sys/block/sd$c/queue/scheduler
+  sudo /sbin/blockdev --setra 16384 /dev/sd$c
+  ((++cnt > $1)) && break
 done
 sudo sh -c 'cat /tmp/fstab.cape >> /etc/fstab'
 
+if [ "$2" == "yes" ]; then
+  # Calculate how many volumes to create
+  echo "Calculating how many volumes to use"
+  if [[ "$1" -lt 8 ]]; then
+    VOLUMES=1
+  elif [[ "$1" -lt 16 ]]; then
+    VOLUMES=2
+  else
+    VOLUMES=4
+  fi
+  if (( "${1}" % "${VOLUMES}" != 0 )); then
+    echo "Drive count ("${1}") not divisible by number of volumes ("${VOLUMES}"), using VOLUMES=1"
+    VOLUMES=1
+  fi
+  echo "VOLUMES=$VOLUMES"
+
+  DRIVES=($(ls /dev/sd[c-z]))
+  DRIVE_COUNT=${#DRIVES[@]}
+
+  umount /dev/md[0-9]* || true
+
+  umount ${DRIVES[*]} || true
+
+  mdadm --stop /dev/md[0-9]* || true
+
+  mdadm --zero-superblock ${DRIVES[*]}
+
+  for VOLUME in $(seq $VOLUMES); do
+    DPV=$(expr "$DRIVE_COUNT" "/" "$VOLUMES")
+    DRIVE_SET=($(ls ${DRIVE_PATTERN} | head -n $(expr "$DPV" "*" "$VOLUME") | tail -n "$DPV"))
+    mdadm --create /dev/md${VOLUME} --run --level 0 --chunk 256K --raid-devices=${#DRIVE_SET[@]} ${DRIVE_SET[*]} --force
+    mkfs.xfs -f /dev/md${VOLUME}
+    mkdir -p /data${VOLUME}
+  done
+  mdadm --detail --scan > /etc/mdadm.conf
+  mount -a
+
+fi
 # Configure 50GB swap file on boot disk for all nodes
 sudo fallocate -l 50g /swapfile
 sudo chmod 600 /swapfile
@@ -96,9 +145,10 @@ serverSetup(){
 
 
 _main() {
+    check_args
     securitySetup
     networkSetup
-    setupDisk $1
+    setupDisk $1 $2
     installSoftware
     serverSetup
 

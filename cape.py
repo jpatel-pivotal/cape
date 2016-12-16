@@ -102,13 +102,19 @@ def checkRequiredVars(args):
     else:
         sys.exit('Failed! Add ROOT_PW=<desired root password> to your ' +
                  args.config + ' file.\n')
+    if os.environ["RAID0"] is not None \
+       and 'yes' or 'no' in os.environ["RAID0"]:
+        logging.debug('RAID0: ' + str(os.environ["RAID0"]))
+    else:
+        sys.exit('Failed! Add RAID0=<yes|no> to your ' +
+                 args.config + ' file.\n If yes, we will create ' +
+                 'a RADID0 volume using all data drives.\n')
+    # Check params we will use to deploy GPDB
     if os.environ["PIVNET_APIKEY"] is not None:
         logging.debug('PIVNET_APIKEY: ' + str(os.environ["PIVNET_APIKEY"]))
     else:
         sys.exit('Failed! Add PIVNET_APIKEY=<your pivnet key> to your ' +
                  args.config + ' file.\n')
-    # Check params we will use to deploy GPDB
-    # Need to add a check for MADLIB_VERSION after Dan fixes it
     if os.environ["BASE_HOME"] is not None:
         logging.debug('BASE_HOME: ' + str(os.environ["BASE_HOME"]))
     else:
@@ -116,7 +122,7 @@ def checkRequiredVars(args):
                  args.config + ' file.\n')
     if os.environ["SEGMENTDBS"] is not None:
         logging.debug('SEGMENTDBS: ' + str(os.environ["SEGMENTDBS"]))
-        if os.environ["SEGMENTDBS"] < 16 and os.environ["SEGMENTDBS"] > 0:
+        if int(os.environ["SEGMENTDBS"]) < 16 and int(os.environ["SEGMENTDBS"]) > 0:
             logging.debug('SEGMENTDBS in valid range')
         else:
             sys.exit('Failed! Set SEGMENTDBS=<number between 1-16> in your ' +
@@ -241,6 +247,8 @@ def cliParse():
             logging.info("Creating a base Cluster:" + clusterDictionary["clusterName"])
             logging.debug('With Dictionary: ' + json.dumps(clusterDictionary))
             ClusterBuilder.buildServers(clusterDictionary)
+            stopTime = datetime.datetime.today()
+            print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
         elif (args.type == "gpdb"):
             print clusterDictionary["clusterName"] + ": Creating a Greenplum Database Cluster"
             logging.info("Creating a Greenplum Database Cluster:" + clusterDictionary["clusterName"])
