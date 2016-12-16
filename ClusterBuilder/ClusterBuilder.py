@@ -244,8 +244,6 @@ def prepServer(clusterDictionary,clusterNode, nodeCnt):
             ssh.exec_command("sudo chmod +x /tmp/prepareHost.sh")
             (stdin, stdout, stderr) = ssh.exec_command("/tmp/prepareHost.sh " + os.environ["DISK_QTY"] + os.environ["RAID0"] +" &> /tmp/prepareHost.log")
             logging.debug('Starting prepServer script on ' + clusterNode["nodeName"])
-            (stdin, stdout, stderr) = ssh.exec_command("/tmp/prepareHost.sh " + os.environ["DISK_QTY"] + " &> /tmp/prepareHost.log")
-            logging.debug('Completed prepServer script on ' + clusterNode["nodeName"])
             logging.debug(stdout.readlines())
             logging.debug(stderr.readlines())
             homeDir = os.environ["BASE_HOME"] + "/home"
