@@ -23,9 +23,10 @@ check_args() {
 
 setupDisk(){
 
+sudo yum -y install xfsprogs xfsdump
 if [ "$2" == "no" ]; then
   echo "Setup $1 Disk/s with RAID0: $2"
-  sudo yum -y install xfsprogs xfsdump
+
 
 
   for d in $(seq 1 $1)
@@ -73,7 +74,7 @@ if [ "$2" == "yes" ]; then
   fi
   echo "VOLUMES=$VOLUMES"
 
-  DRIVES=($(ls /dev/sd[c-z]))
+  DRIVES=($(ls /dev/sd[b-z]))
   DRIVE_COUNT=${#DRIVES[@]}
 
   umount /dev/md[0-9]* || true
@@ -86,7 +87,7 @@ if [ "$2" == "yes" ]; then
 
   for VOLUME in $(seq $VOLUMES); do
     DPV=$(expr "$DRIVE_COUNT" "/" "$VOLUMES")
-    DRIVE_SET=($(ls /dev/sd[c-z] | head -n $(expr "$DPV" "*" "$VOLUME") | tail -n "$DPV"))
+    DRIVE_SET=($(ls /dev/sd[b-z] | head -n $(expr "$DPV" "*" "$VOLUME") | tail -n "$DPV"))
     sudo mdadm --create /dev/md${VOLUME} --run --level 0 --chunk 256K --raid-devices=${#DRIVE_SET[@]} ${DRIVE_SET[*]} --force
     mkfs.xfs -f /dev/md${VOLUME}
     sudo mkdir -p /data${VOLUME}
