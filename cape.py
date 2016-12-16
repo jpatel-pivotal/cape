@@ -12,7 +12,6 @@ from ClusterBuilder import InstallGPDB
 from ClusterBuilder import SoftwareDownload
 from ClusterDestroyer import ClusterDestroyer
 from QueryCluster import QueryCluster
-from LabBuilder import StudentAccounts
 
 
 def checkRequiredVars(args):
@@ -116,10 +115,10 @@ def checkRequiredVars(args):
                  args.config + ' file.\n')
     if os.environ["SEGMENTDBS"] is not None:
         logging.debug('SEGMENTDBS: ' + str(os.environ["SEGMENTDBS"]))
-        if os.environ["SEGMENTDBS"] < 16 and os.environ["SEGMENTDBS"] > 0:
+        if int(os.environ["SEGMENTDBS"]) < 16 and int(os.environ["SEGMENTDBS"]) > 0:
             logging.debug('SEGMENTDBS in valid range')
         else:
-            sys.exit('Failed! Set SEGMENTDBS=<number between 1-16> in your ' +
+            sys.exit('Failed! Invalid Value: Set SEGMENTDBS=<number between 1-16> in your ' +
                      args.config + ' file.\n')
     else:
         sys.exit('Failed! Add SEGMENTDBS=<# of segs per node> to your ' +
@@ -257,38 +256,6 @@ def cliParse():
             print "HDB Builder"
             ClusterBuilder.buildServers(clusterDictionary)
             SoftwareDownload.downloadSoftware(clusterDictionary)
-            #StudentAccounts.add(clusterDictionary)
-
-            # if (args.verbose == True):
-            #     clusterNodes = ClusterBuilder.buildServers(config)
-            #     #createCluster(clusterDictionary,False)  #These are opposite because  the logging value is quiet_stdout so True is no logging
-            #
-            # else:
-            #     ClusterBuilder.buildServers(clusterDictionary,config)
-            #
-            #    # createCluster(clusterDictionary,True)
-
-            # elif (args.subparser_name == "destroy"):
-            #     clusterDictionary["clusterName"] = args.clustername
-            #     print "Not Yet Implemented"
-            # elif (args.subparser_name == "query"):
-            #     clusterInfo = queryCluster(args.clustername)
-            #
-            #
-            # elif (args.subparser_name == "stage"):
-            #     clusterInfo = queryCluster(args.clustername)
-            #     # TEMPORARY    REMOVE!!!
-            #     # with open("./" + clusterInfo["name"] + "/clusterInfo.json") as clusterInfoFile:
-            #     #     clusterInfo = json.load(clusterInfoFile)
-            #     #downloadSoftware(clusterDictionary, "pivotal-gpdb")
-            #
-            #     stageCluster(clusterInfo)
-            #
-            # elif (args.subparser_name == "gpdb"):
-            #     clusterName = (args.clustername)
-            #     with open("./" + clusterName + "/clusterInfo.json") as clusterInfoFile:
-            #         clusterInfo = json.load(clusterInfoFile)
-            #     Users.gpControl(clusterInfo,args.action)
             stopTime = datetime.datetime.today()
             print  "Cluster " + sys.argv[1] + " Completion Time: ", stopTime
             logging.debug("Cluster " + sys.argv[1] + " Completion Time: " + str(stopTime))
