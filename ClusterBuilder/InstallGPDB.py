@@ -692,7 +692,12 @@ def initDB(clusterNode, clusterName):
     with open(str(os.environ["CAPE_HOME"])+"/templates/gpinitsystem_config.template", 'r+') as gpConfigTemplate:
         gpConfigTemplateData = gpConfigTemplate.read()
         gpConfigTemplateModData = gpConfigTemplateData.replace("%MASTER%", clusterNode["nodeName"])
-        gpConfigDirectoriesData = gpConfigTemplateModData.replace("declare -a DATA_DIRECTORY=(/data/primary /data/primary)","declare -a DATA_DIRECTORY=("+dataDirectories+")")
+        if 'yes' in os.environ["RAID0"]:
+            gpConfigTemplateMasterDir = gpConfigTemplateModData.replace("MASTER_DIRECTORY=/data/disk1/master","MASTER_DIRECTORY=/data1/master")
+        else:
+            # Basically no replacement but doing thsi to make coede readable and work smoothly
+            gpConfigTemplateMasterDir = gpConfigTemplateModData.replace("MASTER_DIRECTORY=/data/disk1/master","MASTER_DIRECTORY=/data/disk1/master")
+        gpConfigDirectoriesData = gpConfigTemplateMasterDir.replace("declare -a DATA_DIRECTORY=(/data/primary /data/primary)","declare -a DATA_DIRECTORY=("+dataDirectories+")")
         gpConfigTemplateData  = gpConfigDirectoriesData.replace("declare -a MIRROR_DATA_DIRECTORY=(/data/mirror /data/mirror)","declare -a MIRROR_DATA_DIRECTORY=("+mirrorDirectories+")")
 
 
