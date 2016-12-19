@@ -327,14 +327,14 @@ def setPaths(clusterNode):
                 logging.info('Set MASTER_DATA_DIRECTORY to /data1/master/gpseg-1')
                 (stdin, stdout, stderr) = ssh.exec_command(
                     "echo 'export MASTER_DATA_DIRECTORY=/data1/master/gpseg-1\n' >> ~/.bashrc")
-                    logging.debug(stdout.readlines())
-                    logging.debug(stderr.readlines())
+                logging.debug(stdout.readlines())
+                logging.debug(stderr.readlines())
             else:
                 logging.info('Set MASTER_DATA_DIRECTORY to /data/disk1/master/gpseg-1')
                 (stdin, stdout, stderr) = ssh.exec_command(
                     "echo 'export MASTER_DATA_DIRECTORY=/data/disk1/master/gpseg-1\n' >> ~/.bashrc")
-                    logging.debug(stdout.readlines())
-                    logging.debug(stderr.readlines())
+                logging.debug(stdout.readlines())
+                logging.debug(stderr.readlines())
             connected = True
         except Exception as e:
             print clusterNode["nodeName"] + ": Attempting SSH Connection"
