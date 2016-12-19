@@ -323,10 +323,18 @@ def setPaths(clusterNode):
                 "echo 'source /usr/local/greenplum-db/greenplum_path.sh\n' >> ~/.bashrc")
             logging.debug(stdout.readlines())
             logging.debug(stderr.readlines())
-            (stdin, stdout, stderr) = ssh.exec_command(
-                "echo 'export MASTER_DATA_DIRECTORY=/data/disk1/master/gpseg-1\n' >> ~/.bashrc")
-            logging.debug(stdout.readlines())
-            logging.debug(stderr.readlines())
+            if 'yes' in os.environ["RAID0"]:
+                logging.info('Set MASTER_DATA_DIRECTORY to /data1/master/gpseg-1')
+                (stdin, stdout, stderr) = ssh.exec_command(
+                    "echo 'export MASTER_DATA_DIRECTORY=/data1/master/gpseg-1\n' >> ~/.bashrc")
+                    logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
+            else:
+                logging.info('Set MASTER_DATA_DIRECTORY to /data/disk1/master/gpseg-1')
+                (stdin, stdout, stderr) = ssh.exec_command(
+                    "echo 'export MASTER_DATA_DIRECTORY=/data/disk1/master/gpseg-1\n' >> ~/.bashrc")
+                    logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
             connected = True
         except Exception as e:
             print clusterNode["nodeName"] + ": Attempting SSH Connection"
@@ -365,27 +373,53 @@ def makeDirectories(clusterNode):
                         key_filename=str(os.environ["CONFIGS_PATH"]) + str(os.environ["SSH_KEY"]),
                         timeout=120)
             if "master" in clusterNode["role"]:
-                logging.info('Making /data/disk1/master')
-                (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/disk1/master")
-                logging.debug(stdout.readlines())
-                logging.debug(stderr.readlines())
+                if 'yes' in os.environ["RAID0"]:
+                    logging.info('Making /data1/master')
+                    (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data1/master")
+                    logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
+                    logging.info('Settings permissions for gpadmin on /data1/*')
+                    (stdin, stdout, stderr) = ssh.exec_command("sudo chown -R gpadmin: /data1")
+                    logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
+                else:
+                    logging.info('Making /data/disk1/master as we have no RAID0 set')
+                    (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/disk1/master")
+                    logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
+                    logging.info('Settings permissions for gpadmin on /data/disk1/*')
+                    (stdin, stdout, stderr) = ssh.exec_command("sudo chown -R gpadmin: /data/disk1/")
+                    logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
             else:
-
                 numDisks = os.environ["DISK_QTY"]
                 logging.debug('numDisks: ' + str(numDisks))
                 segDBs = os.environ["SEGMENTDBS"]
                 logging.debug('segmentdbs: ' + str(segDBs))
-                logging.info('Making primary and mirror top level dirs and setting permissions')
-                for diskNum in range(1, int(numDisks) + 1):
-                    (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/disk"+str(diskNum)+"/primary")
+                if 'yes' in os.environ["RAID0"]:
+                    logging.info('Making primary and mirror top level dirs and setting permissions with RAID0')
+                    for diskNum in range(1, int(numDisks) + 1):
+                        (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data1/primary")
+                        logging.debug(stdout.readlines())
+                        logging.debug(stderr.readlines())
+                        (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data1/mirror")
+                        logging.debug(stdout.readlines())
+                        logging.debug(stderr.readlines())
+                    (stdin, stdout, stderr) = ssh.exec_command("sudo chown -R gpadmin: /data1")
                     logging.debug(stdout.readlines())
                     logging.debug(stderr.readlines())
-                    (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/disk"+str(diskNum)+"/mirror")
+                else:
+                    logging.info('Making primary and mirror top level dirs and setting permissions with no RAID0')
+                    for diskNum in range(1, int(numDisks) + 1):
+                        (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/disk"+str(diskNum)+"/primary")
+                        logging.debug(stdout.readlines())
+                        logging.debug(stderr.readlines())
+                        (stdin, stdout, stderr) = ssh.exec_command("sudo mkdir -p /data/disk"+str(diskNum)+"/mirror")
+                        logging.debug(stdout.readlines())
+                        logging.debug(stderr.readlines())
+                    (stdin, stdout, stderr) = ssh.exec_command("sudo chown -R gpadmin: /data")
                     logging.debug(stdout.readlines())
                     logging.debug(stderr.readlines())
-            (stdin, stdout, stderr) = ssh.exec_command("sudo chown -R gpadmin: /data")
-            logging.debug(stdout.readlines())
-            logging.debug(stderr.readlines())
 
             connected = True
         except Exception as e:
@@ -644,10 +678,14 @@ def initDB(clusterNode, clusterName):
 
     for diskNum in range(1, int(numDisks)+1):
         for segNum in range(1, int(segDBDirs)+1):
-            dataDirectories = dataDirectories + diskBase+"/disk" +\
-                str(diskNum) + "/primary "
-            mirrorDirectories = mirrorDirectories + diskBase+"/disk" +\
-                str(diskNum)+"/mirror "
+            if 'yes' in os.environ["RAID0"]:
+                dataDirectories = dataDirectories + "/data1/primary "
+                mirrorDirectories = mirrorDirectories + "/data1/mirror "
+            else:
+                dataDirectories = dataDirectories + diskBase+"/disk" +\
+                    str(diskNum) + "/primary "
+                mirrorDirectories = mirrorDirectories + diskBase+"/disk" +\
+                    str(diskNum)+"/mirror "
     logging.debug('dataDirectories: ' + dataDirectories)
     logging.debug('mirrorDirectories: ' + mirrorDirectories)
 
