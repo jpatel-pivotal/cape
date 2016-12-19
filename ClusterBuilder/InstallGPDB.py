@@ -761,8 +761,14 @@ def initDB(clusterNode, clusterName):
             logging.info('Starting DB init')
             (stdin, stdout, stderr) = ssh.exec_command(
                 "source /usr/local/greenplum-db/greenplum_path.sh;gpinitsystem -c /tmp/gpinitsystem_config.cape -a")
+            return_code = stdout.channel.recv_exit_status()
             logging.debug(stdout.readlines())
             logging.debug(stderr.readlines())
+            if return_code != 0:
+                logging.info('InitDB Failed')
+                logging.debug('InitDB returned: ' + str(return_code))
+                print('InitDB Failed with return Code: ' + str(return_code))
+                sys.exit('Look at your DEBUG log file for details.')
             connected = True
         except Exception as e:
             print clusterNode["nodeName"] + ": Attempting SSH Connection"
