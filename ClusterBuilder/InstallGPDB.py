@@ -695,7 +695,7 @@ def initDB(clusterNode, clusterName):
         if 'yes' in os.environ["RAID0"]:
             gpConfigTemplateMasterDir = gpConfigTemplateModData.replace("MASTER_DIRECTORY=/data/disk1/master","MASTER_DIRECTORY=/data1/master")
         else:
-            # Basically no replacement but doing thsi to make coede readable and work smoothly
+            # Basically no replacement but doing this to make coede readable and work smoothly
             gpConfigTemplateMasterDir = gpConfigTemplateModData.replace("MASTER_DIRECTORY=/data/disk1/master","MASTER_DIRECTORY=/data/disk1/master")
         gpConfigDirectoriesData = gpConfigTemplateMasterDir.replace("declare -a DATA_DIRECTORY=(/data/primary /data/primary)","declare -a DATA_DIRECTORY=("+dataDirectories+")")
         gpConfigTemplateData  = gpConfigDirectoriesData.replace("declare -a MIRROR_DATA_DIRECTORY=(/data/mirror /data/mirror)","declare -a MIRROR_DATA_DIRECTORY=("+mirrorDirectories+")")

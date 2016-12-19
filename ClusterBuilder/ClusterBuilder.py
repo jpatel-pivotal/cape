@@ -100,7 +100,6 @@ def buildServers(clusterDictionary):
         #### THIS SECTION CAN BE MODIFIED TO TAKE A VARIABLE AND MOUNT MULTIPLE DISKS INSTEAD OF 1
         ####  MOUNTS SHOULD GO UNDER /DATA AND BE DATA1,DATA2,DATAN
         ####  THIS MEANS THE 1 DISK USE CASE SHOULD BE MOUNTED THE SAME WAY.
-
             for diskNum in range(1,int(os.environ["DISK_QTY"])+1):
                 volume = driver.create_volume(os.environ["DISK_SIZE"], nodeName + "-data-disk-"+str(diskNum), None, None,
                                               None, False, "pd-standard")
@@ -167,7 +166,6 @@ def buildFSTAB(clusterDictionary,diskCNT):
                 logging.debug('Creating fstab for 2 volumes')
                 fstabFile.write("/dev/md1" + " /data1" + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
                 fstabFile.write("/dev/md2" + " /data2" + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
-
     logging.info('Wrote fstab file')
     os.chdir(currentPath)
     logging.debug('Changed Dir to: ' + currentPath)
