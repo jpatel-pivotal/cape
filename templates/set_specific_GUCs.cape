@@ -1,0 +1,15 @@
+#!/bin/bash
+# We us this file to set GUCs for GPDB if SET_GUCS=yes in config.env
+# We don't run this if SET_GUCS=no.
+
+gpconfig -c gp_interconnect_type -v UDPIFC
+gpconfig -c gp_interconnect_transmit_timeout -v 3600
+gpconfig -c gp_interconnect_tcp_listener_backlog -v 2048
+gpconfig -c gp_fts_probe_interval -v 5min
+gpconfig -c gp_fts_probe_timeout -v 60s
+gpconfig -c gp_interconnect_log_stats -v true -m true --skipvalidation
+
+# Setting GUCs we need for TPCDS runs
+gpconfig -c optimizer -v on --masteronly
+gpconfig -c gp_autostats_mode -v none --masteronly
+gpconfig -c optimizer_analyze_root_partition -v on --masteronly

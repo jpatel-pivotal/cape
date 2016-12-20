@@ -16,6 +16,8 @@ from QueryCluster import QueryCluster
 
 def checkRequiredVars(args):
     logging.info('Checking Required Variables')
+    # Will use this list of allowed values to check variables against
+    allowed=['yes', 'no']
     # Check Path Variables
     if os.path.isabs(os.environ["CONFIGS_PATH"]):
         logging.debug('CONFIGS_PATH is absolute')
@@ -23,7 +25,7 @@ def checkRequiredVars(args):
         sys.exit('Failed! CONFIGS_PATH can not be a relative path. ' +
                  'Re run with --config <aboslute path to your' +
                  ' config.env file.\n')
-    # Check cloud auth params
+    # Check required cloud auth params
     if os.environ["PROJECT"] is not None:
         logging.debug('PROJECT: ' + str(os.environ["PROJECT"]))
     else:
@@ -60,7 +62,7 @@ def checkRequiredVars(args):
                  '/' + str(os.environ["SVC_ACCOUNT_KEY"]) +
                  ' or file does not exist!' +
                  '\nFix SVC_ACCOUNT_KEY in your ' + args.config + ' file.\n')
-    # Check params used to deploy vms
+    # Check required params used to deploy vms
     if os.environ["SERVER_TYPE"] is not None:
         logging.debug('SERVER_TYPE: ' + str(os.environ["SERVER_TYPE"]))
     else:
@@ -101,14 +103,14 @@ def checkRequiredVars(args):
     else:
         sys.exit('Failed! Add ROOT_PW=<desired root password> to your ' +
                  args.config + ' file.\n')
-    if os.environ["RAID0"] is not None \
-       and 'yes' or 'no' in os.environ["RAID0"]:
-        logging.debug('RAID0: ' + str(os.environ["RAID0"]))
-    else:
-        sys.exit('Failed! Add RAID0=<yes|no> to your ' +
-                 args.config + ' file.\n If yes, we will create ' +
-                 'a RADID0 volume using all data drives.\n')
-    # Check params we will use to deploy GPDB
+    if os.environ["RAID0"] is not None:
+        if any(x in os.environ["RAID0"] for x in allowed):
+            logging.debug('RAID0: ' + str(os.environ["RAID0"]))
+        else:
+            sys.exit('Failed! Add RAID0=<yes|no> to your ' +
+                     args.config + ' file.\n If yes, we will create ' +
+                     'a RADID0 volume using all data drives.\n')
+    # Check required params we will use to deploy GPDB
     if os.environ["PIVNET_APIKEY"] is not None:
         logging.debug('PIVNET_APIKEY: ' + str(os.environ["PIVNET_APIKEY"]))
     else:
@@ -136,24 +138,53 @@ def checkRequiredVars(args):
                  'to be equal to or greater than DISK_QTY.\n\n' +
                  'Fix SEGMENTDBS=<# of segs per node> in your ' + args.config +
                  ' file.\n')
-    if os.environ["STANDBY"] is not None \
-       and 'yes' or 'no' in os.environ["STANDBY"]:
-        logging.debug('STANDBY: ' + os.environ["STANDBY"])
-    else:
-        sys.exit('Failed! Add STANDBY=<yes|no> to your ' +
-                 args.config + ' file.\n')
-    if os.environ["ACCESS"] is not None \
-       and 'yes' or 'no' in os.environ["ACCESS"]:
-        logging.debug('ACCESS: ' + os.environ["ACCESS"])
-    else:
-        sys.exit('Failed! Add ACCESS=<yes|no> to your ' +
-                 args.config + ' file.\n')
+    if os.environ["STANDBY"] is not None:
+        if any(x in os.environ["STANDBY"] for x in allowed):
+            logging.debug('STANDBY: ' + os.environ["STANDBY"])
+        else:
+            sys.exit('Failed! Add STANDBY=<yes|no> to your ' +
+                     args.config + ' file.\n')
+    if os.environ["ACCESS"] is not None:
+        if any(x in os.environ["ACCESS"] for x in allowed):
+            logging.debug('ACCESS: ' + os.environ["ACCESS"])
+        else:
+            sys.exit('Failed! Add ACCESS=<yes|no> to your ' +
+                     args.config + ' file.\n')
     if os.environ["STANDBY"] == os.environ["ACCESS"]:
         logging.debug('STANDBY and ACCESS match')
     else:
         sys.exit('Failed! STANDBY and ACCESS do not match! ' +
                  'Set them both to either yes or no in your ' +
                  args.config + ' file.\n')
+    # Check optional params for GPDB
+    if os.getenv("SET_GUCS") is None:
+        logging.debug('Optional: SET_GUCS is not set.')
+    elif os.environ["SET_GUCS"] is not None:
+        if any(x in os.environ["SET_GUCS"] for x in allowed):
+            logging.debug('SET_GUCS: ' + os.environ["SET_GUCS"])
+        else:
+            sys.exit('Failed! Optional variable SET_GUCS is not ' +
+                     'yes or no.\n It should be: SET_GUCS=<yes|no>\n' +
+                     'Fix SET_GUCS to be either yes or no in your ' +
+                     args.config + ' file.\n')
+    if os.getenv("GPDB_BUILD") is None:
+        logging.debug('Optional: GPDB_BUILD is not set.')
+    elif os.environ["GPDB_BUILD"] is not None:
+        if os.path.isabs(os.environ["GPDB_BUILD"]):
+            logging.debug('GPDB_BUILD: ' + os.environ["GPDB_BUILD"])
+        else:
+            sys.exit('Failed! Optional variable GPDB_BUILD is not ' +
+                     'set to absolute path.\n It should be: ' +
+                     'GPDB_BUILD=<path to binary to upload & install ' +
+                     'to deployed cluster>\n Fix GPDB_BUILD in your ' +
+                     args.config + ' file.\n')
+        if os.path.isfile(str(os.environ["GPDB_BUILD"])):
+            logging.debug('GPDB_BUILD file exists and accessible')
+        else:
+            sys.exit('Failed! Cannot access: ' + str(os.environ["GPDB_BUILD"]) +
+                     ' or file does not exist!' +
+                     '\nFix GPDB_BUILD in your ' + args.config + ' file.\n')
+
 
 
 def cliParse():

@@ -724,7 +724,29 @@ def initDB(clusterNode, clusterName):
             logging.info('Uploading gpinitsystem_config.cape file')
             sftp = ssh.open_sftp()
             sftp.put("gpinitsystem_config", "/tmp/gpinitsystem_config.cape", confirm=True)
-
+            if 'yes' in os.environ["SET_GUCS"]:
+                # Upload GUCS file
+                logging.info('Uploading /templates/set_specific_GUCs.cape file')
+                sftp.put(os.environ["CAPE_HOME"] +
+                         "/templates/set_specific_GUCs.cape",
+                         "/tmp/set_specific_GUCs.sh", confirm=True)
+                logging.info('Making /tmp/set_specific_GUCs.sh executable')
+                (stdin, stdout, stderr) = ssh.exec_command("sudo chmod +x " +
+                                                           "/tmp/set_specific_GUCs.sh")
+                logging.debug(stdout.readlines())
+                logging.debug(stderr.readlines())
+                logging.info('Making gpadmin own /tmp/set_specific_GUCs.sh')
+                (stdin, stdout, stderr) = ssh.exec_command("sudo chown " +
+                                                           "gpadmin:gpadmin " +
+                                                           "/tmp/set_specific_GUCs.sh")
+                logging.debug(stdout.readlines())
+                logging.debug(stderr.readlines())
+            # setting gpadmin as owner for gpinitsystem_config.cape
+            (stdin, stdout, stderr) = ssh.exec_command("sudo chown " +
+                                                       "gpadmin:gpadmin " +
+                                                       "/tmp/gpinitsystem_config.cape")
+            logging.debug(stdout.readlines())
+            logging.debug(stderr.readlines())
             connected = True
         except Exception as e:
             print clusterNode["nodeName"] + ": Attempting SSH Connection"
@@ -769,6 +791,30 @@ def initDB(clusterNode, clusterName):
                 logging.debug('InitDB returned: ' + str(return_code))
                 print('InitDB Failed with return Code: ' + str(return_code))
                 sys.exit('Look at your DEBUG log file for details.')
+            if 'yes' in os.environ["SET_GUCS"]:
+                (stdin, stdout, stderr) = ssh.exec_command(
+                    "source /usr/local/greenplum-db/greenplum_path.sh;/tmp/set_specific_GUCs.sh")
+                return_code = stdout.channel.recv_exit_status()
+                logging.debug(stdout.readlines())
+                logging.debug(stderr.readlines())
+                if return_code != 0:
+                    logging.info('Settings GUCS Failed')
+                    logging.debug('Setting GUCS returned: ' + str(return_code))
+                    print('Setting GUCS Failed with return Code: ' + str(return_code))
+                    print('Look at your DEBUG log file for details. Will Continue.')
+                elif return_code == 0:
+                    logging.info('GUCS set. Restarting GPDB')
+                    (stdin, stdout, stderr) = ssh.exec_command(
+                        "source /usr/local/greenplum-db/greenplum_path.sh;gpstop -ar")
+                    return_code = stdout.channel.recv_exit_status()
+                    logging.debug(stdout.readlines())
+                    logging.debug(stderr.readlines())
+                    if return_code !=0:
+                        logging.info('Restart GPDB failed')
+                        logging.debug('Restart GPDB returned: ' + str(return_code))
+                        print('Restart GPDB Failed with return Code: ' + str(return_code))
+                        print('Look at your DEBUG log file for details. Will Continue.')
+
             connected = True
         except Exception as e:
             print clusterNode["nodeName"] + ": Attempting SSH Connection"
