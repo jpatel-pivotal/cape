@@ -9,21 +9,39 @@
 #}
 
 
+check_args() {
+  if [ -z "$1" ]; then
+    echo "Failed! Did not get number of drives"
+    exit 1
+  fi
+
+  if [ -z "$2" ]; then
+    echo "Failed! Did not get a value for RAID0"
+    exit 1
+  fi
+}
 
 setupDisk(){
-echo "Setup Disk"
+# Write fstab file
+sudo sh -c 'cat /etc/fstab >> /etc/ORIG.fstab'
+sudo sh -c 'cat /tmp/fstab.cape >> /etc/fstab'
 sudo yum -y install xfsprogs xfsdump
 
-for d in $(seq 1 $1)
-do
+if [ "$2" == "no" ]; then
+  echo "Setup $1 Disk/s with RAID0: $2"
+
+
+
+  for d in $(seq 1 $1)
+  do
     sudo mkdir -p /data/disk$d
-done
-cnt=1
-echo $1
-for c in {b..z}
-do
-  echo $c
-sudo fdisk /dev/sd$c <<EOF
+  done
+  cnt=1
+  echo $1
+  for c in {b..z}
+  do
+    echo $c
+    sudo fdisk /dev/sd$c <<EOF
 n
 p
 1
@@ -32,15 +50,55 @@ p
 w
 EOF
 #sudo sh -c 'echo "LABEL=data$cnt /data/data$cnt xfs rw,noatime,inode64,allocsize=16m 0 0" >> /etc/fstab'
-echo $cnt
-echo "MAKEFS"
-echo "/dev/sd$c -L data$cnt"
-sudo mkfs.xfs -f /dev/sd$c -L data$cnt
-sudo echo deadline > /sys/block/sd$c/queue/scheduler
-sudo /sbin/blockdev --setra 16384 /dev/sd$c
-((++cnt > $1)) && break
-done
-sudo sh -c 'cat /tmp/fstab.cape >> /etc/fstab'
+    echo $cnt
+    echo "MAKEFS"
+    echo "/dev/sd$c -L data$cnt"
+    sudo mkfs.xfs -f /dev/sd$c -L data$cnt
+    sudo echo deadline > /sys/block/sd$c/queue/scheduler
+    sudo /sbin/blockdev --setra 16384 /dev/sd$c
+    ((++cnt > $1)) && break
+  done
+fi
+
+if [ "$2" == "yes" ]; then
+  echo "Setup $1 Disk/s with RAID0: $2"
+  # Calculate how many volumes to create
+  echo "Calculating how many volumes to use"
+  if [[ "$1" -lt 8 ]]; then
+    VOLUMES=1
+  elif [[ "$1" -lt 16 ]]; then
+    VOLUMES=2
+  else
+    VOLUMES=4
+  fi
+  if (( "${1}" % "${VOLUMES}" != 0 )); then
+    echo "Drive count ("${1}") not divisible by number of volumes ("${VOLUMES}"), using VOLUMES=1"
+    VOLUMES=1
+  fi
+  echo "VOLUMES=$VOLUMES"
+
+  DRIVES=($(ls /dev/sd[b-z]))
+  DRIVE_COUNT=${#DRIVES[@]}
+
+  sudo umount /dev/md[0-9]* || true
+
+  sudo umount ${DRIVES[*]} || true
+
+  sudo mdadm --stop /dev/md[0-9]* || true
+
+  sudo mdadm --zero-superblock ${DRIVES[*]}
+
+  for VOLUME in $(seq $VOLUMES); do
+    DPV=$(expr "$DRIVE_COUNT" "/" "$VOLUMES")
+    DRIVE_SET=($(ls /dev/sd[b-z] | head -n $(expr "$DPV" "*" "$VOLUME") | tail -n "$DPV"))
+    sudo mdadm --create /dev/md${VOLUME} --run --level 0 --chunk 256K --raid-devices=${#DRIVE_SET[@]} ${DRIVE_SET[*]} --force
+    sudo mkfs.xfs -f /dev/md${VOLUME}
+    sudo mkdir -p /data${VOLUME}
+  done
+  sudo sh -c 'mdadm --detail --scan > /etc/mdadm.conf'
+  sudo mount -a
+
+fi
 
 # Configure 50GB swap file on boot disk for all nodes
 sudo fallocate -l 50g /swapfile
@@ -64,7 +122,7 @@ securitySetup(){
 networkSetup(){
     sudo sed -i 's|[#]*PasswordAuthentication no|PasswordAuthentication yes|g' /etc/ssh/sshd_config
     sudo sed -i 's|PermitRootLogin no|PermitRootLogin yes|g' /etc/ssh/sshd_config
-        sudo sed -i 's|UsePAM no|UsePAM yes|g' /etc/ssh/sshd_config
+    sudo sed -i 's|UsePAM no|UsePAM yes|g' /etc/ssh/sshd_config
 
     #sudo sh -c "echo 'Defaults \!requiretty' > /etc/sudoers.d/888-dont-requiretty"
     sudo sh -c "cat '/tmp/sysctl.conf.cape' >> /etc/sysctl.conf"
@@ -96,9 +154,11 @@ serverSetup(){
 
 
 _main() {
+    echo "prepareHost.sh received args: $@"
+    check_args $1 $2
     securitySetup
     networkSetup
-    setupDisk $1
+    setupDisk $1 $2
     installSoftware
     serverSetup
 
