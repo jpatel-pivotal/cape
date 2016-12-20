@@ -23,7 +23,7 @@ def checkRequiredVars(args):
         sys.exit('Failed! CONFIGS_PATH can not be a relative path. ' +
                  'Re run with --config <aboslute path to your' +
                  ' config.env file.\n')
-    # Check cloud auth params
+    # Check required cloud auth params
     if os.environ["PROJECT"] is not None:
         logging.debug('PROJECT: ' + str(os.environ["PROJECT"]))
     else:
@@ -60,7 +60,7 @@ def checkRequiredVars(args):
                  '/' + str(os.environ["SVC_ACCOUNT_KEY"]) +
                  ' or file does not exist!' +
                  '\nFix SVC_ACCOUNT_KEY in your ' + args.config + ' file.\n')
-    # Check params used to deploy vms
+    # Check required params used to deploy vms
     if os.environ["SERVER_TYPE"] is not None:
         logging.debug('SERVER_TYPE: ' + str(os.environ["SERVER_TYPE"]))
     else:
@@ -108,7 +108,7 @@ def checkRequiredVars(args):
         sys.exit('Failed! Add RAID0=<yes|no> to your ' +
                  args.config + ' file.\n If yes, we will create ' +
                  'a RADID0 volume using all data drives.\n')
-    # Check params we will use to deploy GPDB
+    # Check required params we will use to deploy GPDB
     if os.environ["PIVNET_APIKEY"] is not None:
         logging.debug('PIVNET_APIKEY: ' + str(os.environ["PIVNET_APIKEY"]))
     else:
@@ -153,6 +153,28 @@ def checkRequiredVars(args):
     else:
         sys.exit('Failed! STANDBY and ACCESS do not match! ' +
                  'Set them both to either yes or no in your ' +
+                 args.config + ' file.\n')
+    # Check optional params for GPDB
+    if os.environ["SET_GUCS"] is None:
+        logging.debug('SET_GUCS is not set.')
+    elif os.environ["SET_GUCS"] is not None \
+            and 'yes' or 'no' in os.environ["SET_GUCS"]:
+        logging.debug('SET_GUCS: ' + os.environ["SET_GUCS"])
+    else:
+        sys.exit('Failed! Optional variable SET_GUCS is not ' +
+                 'yes or no.\n It should be: SET_GUCS=<yes|no>\n' +
+                 'Fix SET_GUCS to be either yes or no in your ' +
+                 args.config + ' file.\n')
+    if os.environ["GPDB_BUILD"] is None:
+        logging.debug('GPDB_BUILD is not set.')
+    elif os.environ["GPDB_BUILD"] is not None \
+            and os.path.isabs(os.environ["GPDB_BUILD"]):
+        logging.debug('GPDB_BUILD: ' + os.environ["GPDB_BUILD"])
+    else:
+        sys.exit('Failed! Optional variable GPDB_BUILD is not ' +
+                 'set to absolute path.\n It should be: ' +
+                 'GPDB_BUILD=<path to binary to upload & install ' +
+                 'to deployed cluster>\n Fix GPDB_BUILD in your ' +
                  args.config + ' file.\n')
 
 
