@@ -229,7 +229,11 @@ def hostDownloads(node, downloads):
                         "PIVNET_APIKEY"] + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
                     logging.debug(stderr.readlines())
                     logging.debug(stdout.readlines())
-
+            if os.environ["GPDB_BUILD"]:
+                logging.info('Pre-Release GPDB build detected')
+                logging.debug('Uploading File: ' + str(os.environ["GPDB_BUILD"]))
+                sftp = ssh.open_sftp()
+                sftp.put(str(os.environ["GPDB_BUILD"]), "/tmp/" + str(os.environ["GPDB_BUILD"]), confirm=True)
             connected = True
         except Exception as e:
             print e
