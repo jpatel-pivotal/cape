@@ -236,7 +236,7 @@ def hostDownloads(node, downloads):
                 logging.info('Pre-Release GPDB build detected')
                 logging.debug('Uploading File: ' + str(os.environ["GPDB_BUILD"]))
                 sftp = ssh.open_sftp()
-                sftp.put(str(os.environ["GPDB_BUILD"]), "/tmp/" + str(os.environ["GPDB_BUILD"]), confirm=True)
+                sftp.put(str(os.environ["GPDB_BUILD"]), "/tmp/" + os.path.basename(str(os.environ["GPDB_BUILD"])), confirm=True)
             connected = True
         except Exception as e:
             print e
