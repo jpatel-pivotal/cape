@@ -63,13 +63,16 @@ def downloadSoftware(clusterDictionary):
         downloadFile = {}
         if "pivotal-gpdb" in clusterDictionary["clusterType"]:
             if "Database Server" in fileInfo["name"]:
-                for file in fileInfo["product_files"]:
-                    if "Red Hat Enterprise Linux 5, 6" in file["name"]:
-                        downloadFile["URL"] = file["_links"]["download"].get("href")
-                        downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
-                        downloadFile["TARGET"] = 0
-
-                        downloads.append(downloadFile)
+                # Skip download if pre-release build requested
+                if os.environ["GPDB_BUILD"]:
+                    logging.info('Skipping GPDB build Download')
+                else:
+                    for file in fileInfo["product_files"]:
+                        if "Red Hat Enterprise Linux 5, 6" in file["name"]:
+                            downloadFile["URL"] = file["_links"]["download"].get("href")
+                            downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
+                            downloadFile["TARGET"] = 0
+                            downloads.append(downloadFile)
             elif "Loader" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     if "Red Hat Enterprise Linux x86_64" in file["name"]:
