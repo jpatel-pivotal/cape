@@ -63,13 +63,16 @@ def downloadSoftware(clusterDictionary):
         downloadFile = {}
         if "pivotal-gpdb" in clusterDictionary["clusterType"]:
             if "Database Server" in fileInfo["name"]:
-                for file in fileInfo["product_files"]:
-                    if "Red Hat Enterprise Linux 5, 6" in file["name"]:
-                        downloadFile["URL"] = file["_links"]["download"].get("href")
-                        downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
-                        downloadFile["TARGET"] = 0
-
-                        downloads.append(downloadFile)
+                # Skip download if pre-release build requested
+                if os.environ["GPDB_BUILD"]:
+                    logging.info('Skipping GPDB build Download')
+                else:
+                    for file in fileInfo["product_files"]:
+                        if "Red Hat Enterprise Linux 5, 6" in file["name"]:
+                            downloadFile["URL"] = file["_links"]["download"].get("href")
+                            downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
+                            downloadFile["TARGET"] = 0
+                            downloads.append(downloadFile)
             elif "Loader" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     if "Red Hat Enterprise Linux x86_64" in file["name"]:
@@ -229,7 +232,11 @@ def hostDownloads(node, downloads):
                         "PIVNET_APIKEY"] + "\" --post-data='' " + str(file['URL']) + " -O /tmp/" + str(file['NAME']))
                     logging.debug(stderr.readlines())
                     logging.debug(stdout.readlines())
-
+            if os.environ["GPDB_BUILD"]:
+                logging.info('Pre-Release GPDB build detected')
+                logging.debug('Uploading File: ' + str(os.environ["GPDB_BUILD"]))
+                sftp = ssh.open_sftp()
+                sftp.put(str(os.environ["GPDB_BUILD"]), "/tmp/" + os.path.basename(str(os.environ["GPDB_BUILD"])), confirm=True)
             connected = True
         except Exception as e:
             print e

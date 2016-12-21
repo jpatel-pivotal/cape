@@ -253,7 +253,7 @@ def cliParse():
     clusterDictionary = {}
 
     startTime = datetime.datetime.today()
-    logging.basicConfig(filename=args.logfile,level=args.loglevel, format='[%(asctime)s] %(pathname)s {%(module)s:%(funcName)s:%(lineno)d} %(levelname)s %(threadName)s - %(message)s')
+    logging.basicConfig(filename=args.logfile,level=args.loglevel, filemode='w', format='[%(asctime)s] %(pathname)s {%(module)s:%(funcName)s:%(lineno)d} %(levelname)s %(threadName)s - %(message)s')
     print  "Start Time: ", startTime
     logging.info('Cape Started with Args:' + str(sys.argv[1:]))
     logging.debug('CAPE_HOME=' + os.environ["CAPE_HOME"])
