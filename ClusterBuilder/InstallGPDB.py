@@ -538,6 +538,11 @@ def uncompressFiles(clusterNode, downloads):
                     (stdin, stdout, stderr) = ssh.exec_command("cd /tmp;tar xvfz ./" + file["NAME"])
                     logging.debug(stdout.readlines())
                     logging.debug(stderr.readlines())
+            if os.environ["GPDB_BUILD"]:
+                logging.info('Unzipping pre-release build')
+                (stdin, stdout, stderr) = ssh.exec_command("cd /tmp;unzip ./" + os.path.basename(str(os.environ["GPDB_BUILD"])))
+                logging.debug(stdout.readlines())
+                logging.debug(stderr.readlines())
 
             connected = True
         except Exception as e:
