@@ -4,7 +4,7 @@
 
 gpconfig -c gp_interconnect_type -v UDPIFC
 gpconfig -c gp_interconnect_transmit_timeout -v 3600
-gpconfig -c gp_interconnect_tcp_listener_backlog -v 2048
+gpconfig -c gp_interconnect_tcp_listener_backlog -v 2048 --skipvalidation
 gpconfig -c gp_fts_probe_interval -v 5min
 gpconfig -c gp_fts_probe_timeout -v 60s
 gpconfig -c gp_interconnect_log_stats -v true -m true --skipvalidation
