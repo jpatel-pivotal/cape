@@ -2,7 +2,7 @@
 # We us this file to set GUCs for GPDB if SET_GUCS=yes in config.env
 # We don't run this if SET_GUCS=no.
 
-gpconfig -c gp_interconnect_type -v UDPIFC
+gpconfig -c gp_interconnect_type -v TCP
 gpconfig -c gp_interconnect_transmit_timeout -v 3600
 gpconfig -c gp_interconnect_tcp_listener_backlog -v 2048 --skipvalidation
 gpconfig -c gp_fts_probe_interval -v 5min
