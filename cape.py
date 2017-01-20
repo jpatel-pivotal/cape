@@ -25,43 +25,69 @@ def checkRequiredVars(args):
         sys.exit('Failed! CONFIGS_PATH can not be a relative path. ' +
                  'Re run with --config <aboslute path to your' +
                  ' config.env file.\n')
-    # Check required cloud auth params
-    if os.environ["PROJECT"] is not None:
-        logging.debug('PROJECT: ' + str(os.environ["PROJECT"]))
+    if os.environ["PROVIDER"] is not None:
+        logging.debug('PROVIDER: ' + str(os.environ["PROVIDER"]))
     else:
-        sys.exit('Failed! Add PROJECT=<project name> to your ' + args.config +
+        sys.exit('Filed! Add PROVIDER=<GCP|AWS> to your ' + args.config +
                  ' file.\n')
-    if os.environ["SSH_USERNAME"] is not None:
-        logging.debug('SSH_USERNAME: ' + str(os.environ["SSH_USERNAME"]))
+    if os.environ["PROVIDER"] == 'GCP':
+        logging.info('Checking GCP Auth Info')
+        # Check required cloud auth params for GCP
+        if os.environ["PROJECT"] is not None:
+            logging.debug('PROJECT: ' + str(os.environ["PROJECT"]))
+        else:
+            sys.exit('Failed! Add PROJECT=<project name> to your ' + args.config +
+                     ' file.\n')
+        if os.environ["SSH_USERNAME"] is not None:
+            logging.debug('SSH_USERNAME: ' + str(os.environ["SSH_USERNAME"]))
+        else:
+            sys.exit('Failed! Add SSH_USERNAME=<user name> to your ' +
+                     args.config + ' file.\n')
+        if os.environ["SVC_ACCOUNT"] is not None:
+            logging.debug('SVC_ACCOUNT: ' + str(os.environ["SVC_ACCOUNT"]))
+        else:
+            sys.exit('Failed! Add SVC_ACCOUNT=<service account name> to your ' +
+                     args.config + ' file.\n')
+        if os.environ["SSH_KEY"] is not None:
+            logging.debug('SSH_KEY: ' + str(os.environ["SSH_KEY"]))
+        else:
+            sys.exit('Failed! Add SSH_KEY=<filename of ssh keyfile> to your ' +
+                     args.config + ' file.\n')
+        if os.path.isfile(str(os.environ["CONFIGS_PATH"]) + '/' +
+                          os.environ["SSH_KEY"]):
+            logging.debug('SSH_KEY file exists and accessible')
+        else:
+            sys.exit('Failed! Cannot access: ' + str(os.environ["CONFIGS_PATH"]) +
+                     '/' + str(os.environ["SSH_KEY"]) +
+                     ' or file does not exist!' +
+                     '\nFix SSH_KEY in your ' + args.config + ' file.\n')
+        if os.path.isfile(str(os.environ["CONFIGS_PATH"]) + '/' +
+                          os.environ["SVC_ACCOUNT_KEY"]):
+            logging.debug('SVC_ACCOUNT_KEY file exists and accessible')
+        else:
+            sys.exit('Failed! Cannot access: ' + str(os.environ["CONFIGS_PATH"]) +
+                     '/' + str(os.environ["SVC_ACCOUNT_KEY"]) +
+                     ' or file does not exist!' +
+                     '\nFix SVC_ACCOUNT_KEY in your ' + args.config + ' file.\n')
+    elif os.environ["PROVIDER"] == 'AWS':
+        # Check AWS Creds
+        logging.info('Checking AWS Auth Info')
+        if os.environ["EC2_ACCESS_KEY_ID"] is not None:
+            logging.debug('EC2_ACCESS_KEY_ID: ' +
+                         str(os.environ["EC2_ACCESS_KEY_ID"]))
+        else:
+            sys.exit('Failed! Add EC2_ACCESS_KEY_ID=<access_key_id> to your ' +
+                     args.config + ' file.\n')
+        if os.environ["EC2_SECRET_KEY"] is not None:
+            logging.debug('EC2_SECRET_KEY: ' +
+                         str(os.environ["EC2_SECRET_KEY"]))
+        else:
+            sys.exit('Failed! Add EC2_SECRET_KEY=<secret_access_key> to your ' +
+                     args.config + ' file.\n')
     else:
-        sys.exit('Failed! Add SSH_USERNAME=<user name> to your ' +
-                 args.config + ' file.\n')
-    if os.environ["SVC_ACCOUNT"] is not None:
-        logging.debug('SVC_ACCOUNT: ' + str(os.environ["SVC_ACCOUNT"]))
-    else:
-        sys.exit('Failed! Add SVC_ACCOUNT=<service account name> to your ' +
-                 args.config + ' file.\n')
-    if os.environ["SSH_KEY"] is not None:
-        logging.debug('SSH_KEY: ' + str(os.environ["SSH_KEY"]))
-    else:
-        sys.exit('Failed! Add SSH_KEY=<filename of ssh keyfile> to your ' +
-                 args.config + ' file.\n')
-    if os.path.isfile(str(os.environ["CONFIGS_PATH"]) + '/' +
-                      os.environ["SSH_KEY"]):
-        logging.debug('SSH_KEY file exists and accessible')
-    else:
-        sys.exit('Failed! Cannot access: ' + str(os.environ["CONFIGS_PATH"]) +
-                 '/' + str(os.environ["SSH_KEY"]) +
-                 ' or file does not exist!' +
-                 '\nFix SSH_KEY in your ' + args.config + ' file.\n')
-    if os.path.isfile(str(os.environ["CONFIGS_PATH"]) + '/' +
-                      os.environ["SVC_ACCOUNT_KEY"]):
-        logging.debug('SVC_ACCOUNT_KEY file exists and accessible')
-    else:
-        sys.exit('Failed! Cannot access: ' + str(os.environ["CONFIGS_PATH"]) +
-                 '/' + str(os.environ["SVC_ACCOUNT_KEY"]) +
-                 ' or file does not exist!' +
-                 '\nFix SVC_ACCOUNT_KEY in your ' + args.config + ' file.\n')
+        sys.exit('Failed! Neither AWS or GCP sepcified.\n Fix ' +
+                 'PROVIDER=<GCP|AWS> in your ' + args.config +
+                 ' file.\n')
     # Check required params used to deploy vms
     if os.environ["SERVER_TYPE"] is not None:
         logging.debug('SERVER_TYPE: ' + str(os.environ["SERVER_TYPE"]))
