@@ -23,8 +23,13 @@ def checkServerState(clusterDictionary):
                                    datacenter=str(os.environ["ZONE"]))
         if os.environ["PROVIDER"] == 'AWS':
             cls = get_driver(Provider.EC2)
-            driver = cls(ACCESS_ID, SECRET_KEY, region="us-west-1")
-        nodes = driver.list_nodes(ex_zone=str(os.environ["ZONE"]))
+            driver = cls(os.environ["EC2_ACCESS_KEY_ID"],
+                         os.environ["EC2_SECRET_KEY"],
+                         region="us-west-1")
+        if os.environ["PROVIDER"] == 'GCP':
+            nodes = driver.list_nodes(ex_zone=str(os.environ["ZONE"]))
+        else:
+            nodes = driver.list_nodes()
         if not nodes:
             print "Did not find any nodes for that cluster!"
             logging.info('Did not find any nodes for that cluster')
