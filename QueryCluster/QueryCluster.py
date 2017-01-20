@@ -14,13 +14,16 @@ def checkServerState(clusterDictionary):
     warnings.simplefilter("ignore")
     print clusterDictionary["clusterName"] + ": Querying Cluster State Started"
     try:
-        ComputeEngine = get_driver(Provider.GCE)
-        driver = ComputeEngine(os.environ["SVC_ACCOUNT"],
-                               str(os.environ["CONFIGS_PATH"]) +
-                               str(os.environ["SVC_ACCOUNT_KEY"]),
-                               project=str(os.environ["PROJECT"]),
-                               datacenter=str(os.environ["ZONE"]))
-
+        if os.environ["PROVIDER"] == 'GCP':
+            ComputeEngine = get_driver(Provider.GCE)
+            driver = ComputeEngine(os.environ["SVC_ACCOUNT"],
+                                   str(os.environ["CONFIGS_PATH"]) +
+                                   str(os.environ["SVC_ACCOUNT_KEY"]),
+                                   project=str(os.environ["PROJECT"]),
+                                   datacenter=str(os.environ["ZONE"]))
+        if os.environ["PROVIDER"] == 'AWS':
+            cls = get_driver(Provider.EC2)
+            driver = cls(ACCESS_ID, SECRET_KEY, region="us-west-1")
         nodes = driver.list_nodes(ex_zone=str(os.environ["ZONE"]))
         if not nodes:
             print "Did not find any nodes for that cluster!"
