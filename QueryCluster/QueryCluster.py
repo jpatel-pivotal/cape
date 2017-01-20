@@ -25,7 +25,7 @@ def checkServerState(clusterDictionary):
             cls = get_driver(Provider.EC2)
             driver = cls(os.environ["EC2_ACCESS_KEY_ID"],
                          os.environ["EC2_SECRET_KEY"],
-                         region="us-west-1")
+                         region=str(os.environ["ZONE"]))
         if os.environ["PROVIDER"] == 'GCP':
             nodes = driver.list_nodes(ex_zone=str(os.environ["ZONE"]))
         else:
