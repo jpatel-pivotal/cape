@@ -205,14 +205,17 @@ def verifyInstall(masterNode, clusterDictionary):
 
                 connected = True
 
-                if ((totalSegmentDBs * 2) == upSegments) and (totalSegmentDBs == primarySegments) and (
-                    totalSegmentDBs == mirrorSegments):
+                if (totalSegmentDBs == upSegments) and (totalSegmentDBs == primarySegments):
+                    if 'yes' in os.environ['MIRRORS'] and (totalSegmentDBs != mirrorSegments):
+                        print clusterDictionary[
+                              "clusterName"] + ": Something went wrong with the Database mirror initialization, please verify manually"
+                        logging.info('GPDB Mirror Counts do not match. Failing to Verify!')
                     print clusterDictionary["clusterName"] + ": Greenplum Database Initialization Verified"
                     logging.info('verifyInstall Completed on: ' + str(masterNode["nodeName"]))
                 else:
                     print clusterDictionary[
                           "clusterName"] + ": Something went wrong with the Database initialization, please verify manually"
-                    logging.info('GPDB Primary and Mirror Counts do not match. Failing to Verify!')
+                    logging.info('GPDB Primary Counts do not match. Failing to Verify!')
 
         except Exception as e:
             print e
@@ -674,7 +677,7 @@ def initDB(clusterNode, clusterName):
 
     if int(numDisks) > 1:
         # Spread Primaries and mirrors across all drives
-        segDBDirs = (int(segDBs)/2)
+        segDBDirs = (int(segDBs)/int(numDisks))
         logging.debug('segDBDirs: '+ str(segDBDirs))
     else:
         # We only have one drive so no spreading of primaries and mirrors
@@ -685,12 +688,14 @@ def initDB(clusterNode, clusterName):
         for segNum in range(1, int(segDBDirs)+1):
             if 'yes' in os.environ["RAID0"]:
                 dataDirectories = dataDirectories + "/data1/primary "
-                mirrorDirectories = mirrorDirectories + "/data1/mirror "
+                if 'yes' in os.environ["MIRRORS"]:
+                    mirrorDirectories = mirrorDirectories + "/data1/mirror "
             else:
                 dataDirectories = dataDirectories + diskBase+"/disk" +\
                     str(diskNum) + "/primary "
-                mirrorDirectories = mirrorDirectories + diskBase+"/disk" +\
-                    str(diskNum)+"/mirror "
+                if 'yes' in os.environ["MIRRORS"]:
+                    mirrorDirectories = mirrorDirectories + diskBase+"/disk" +\
+                        str(diskNum)+"/mirror "
     logging.debug('dataDirectories: ' + dataDirectories)
     logging.debug('mirrorDirectories: ' + mirrorDirectories)
 
