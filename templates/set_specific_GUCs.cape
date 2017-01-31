@@ -17,3 +17,6 @@ gpconfig -c gp_max_packet_size -v 1400
 gpconfig -c optimizer -v on --masteronly
 gpconfig -c gp_autostats_mode -v none --masteronly
 gpconfig -c optimizer_analyze_root_partition -v on --masteronly
+
+# Abort any statement that takes over 20 minutes
+gpconfig -c statement_timeout -v 1200000
