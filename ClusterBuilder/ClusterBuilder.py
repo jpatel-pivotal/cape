@@ -156,16 +156,16 @@ def buildFSTAB(clusterDictionary,diskCNT):
         if os.environ["RAID0"] == "no":
             logging.info('Configuring with no RAID as RAID0=' + str(os.environ["RAID0"]))
             for disk in range(1,diskCNT+1):
-                fstabFile.write("LABEL=data"+str(disk)+ "   /data/disk"+str(disk) + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
+                fstabFile.write("LABEL=data"+str(disk)+ "   /data/disk"+str(disk) + "   xfs rw,noatime,nodiratime,nobarrier,inode64,allocsize=16m 0 0\n")
         else:
             logging.info('Configuring with RAID0 as RAID0=' + str(os.environ["RAID0"]))
             if diskCNT < 8:
                 logging.debug('Creating fstab for 1 volume')
-                fstabFile.write("/dev/md1" + " /data1" + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
+                fstabFile.write("/dev/md1" + " /data1" + "   xfs rw,noatime,nodiratime,nobarrier,inode64,allocsize=16m 0 0\n")
             else:
                 logging.debug('Creating fstab for 2 volumes')
-                fstabFile.write("/dev/md1" + " /data1" + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
-                fstabFile.write("/dev/md2" + " /data2" + "   xfs rw,noatime,inode64,allocsize=16m 0 0\n")
+                fstabFile.write("/dev/md1" + " /data1" + "   xfs rw,noatime,nodiratime,nobarrier,inode64,allocsize=16m 0 0\n")
+                fstabFile.write("/dev/md2" + " /data2" + "   xfs rw,noatime,nodiratime,nobarrier,inode64,allocsize=16m 0 0\n")
     logging.info('Wrote fstab file')
     os.chdir(currentPath)
     logging.debug('Changed Dir to: ' + currentPath)
