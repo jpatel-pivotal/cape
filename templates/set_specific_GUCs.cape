@@ -19,4 +19,4 @@ gpconfig -c gp_autostats_mode -v none --masteronly
 gpconfig -c optimizer_analyze_root_partition -v on --masteronly
 
 # Abort any statement that takes over 20 minutes
-gpconfig -c statement_timeout -v 1200000
+#gpconfig -c statement_timeout -v 1200000
