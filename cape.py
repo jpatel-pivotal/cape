@@ -13,7 +13,6 @@ from ClusterBuilder import SoftwareDownload
 from ClusterDestroyer import ClusterDestroyer
 from QueryCluster import QueryCluster
 
-
 def checkRequiredVars(args):
     logging.info('Checking Required Variables')
     # Will use this list of allowed values to check variables against
