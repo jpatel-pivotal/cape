@@ -114,6 +114,9 @@ def buildServers(clusterDictionary):
             clusterNode["internalIP"] = str(node).split(",")[4].split("'")[1]
             print "     " + nodeName + ": External IP: " + clusterNode["externalIP"]
             print "     " + nodeName + ": Internal IP: " + clusterNode["internalIP"]
+            if '000' in nodeName:
+                with open('/tmp/gpdb-master-host-ip.txt', 'w') as fh:
+                    fh.write(clusterNode["externalIP"])
             logging.debug('Created Node: ' + str(clusterNode))
 
             prepThread = threading.Thread(target=prepServer, args=(clusterDictionary,clusterNode, nodeCnt))
