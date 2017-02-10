@@ -8,11 +8,13 @@ gpconfig -c gp_interconnect_tcp_listener_backlog -v 2048 --skipvalidation
 gpconfig -c gp_fts_probe_interval -v 5min
 gpconfig -c gp_fts_probe_timeout -v 60s
 gpconfig -c gp_interconnect_log_stats -v true -m true --skipvalidation
-gpconfig -c gp_log_interconnect -v debug -m debug --skipvalidation
-gpconfig -c gp_log_fts -v debug -m debug --skipvalidation
+# Removing for now per Venky
+# gpconfig -c gp_log_interconnect -v debug -m debug --skipvalidation
+# gpconfig -c gp_log_fts -v debug -m debug --skipvalidation
 gpconfig -c gp_filerep_tcp_keepalives_count -v 2000
 gpconfig -c gp_max_packet_size -v 1400
-
+# Don't flush metadata cache in between queries
+gpconfig -c optimizer_metadata_caching -v on
 # Setting GUCs we need for TPCDS runs
 gpconfig -c optimizer -v on --masteronly
 gpconfig -c gp_autostats_mode -v none --masteronly
