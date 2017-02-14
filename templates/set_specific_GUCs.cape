@@ -6,8 +6,8 @@ VERSION=$(psql -t -A -c "SELECT CASE WHEN POSITION ('Greenplum Database 4.3' IN 
 
 if [[ "$VERSION" == "gpdb_4_3" ]]; then
   echo "Setting GUCs for GPDB 4.3"
-  gpconfig -c gp_interconnect_type -v TCP
-  gpconfig -c gp_interconnect_tcp_listener_backlog -v 2048 --skipvalidation
+  # gpconfig -c gp_interconnect_type -v TCP
+  # gpconfig -c gp_interconnect_tcp_listener_backlog -v 2048 --skipvalidation
 else
   echo "setting GUCs for GPDB 5.0"
 fi
