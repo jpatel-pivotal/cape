@@ -1,4 +1,5 @@
 import os
+import sys
 import threading
 import time
 import warnings
@@ -141,7 +142,7 @@ def buildServers(clusterDictionary):
         logging.debug(traceback.print_exc())
         logging.debug('Failed')
         print "Failing Process"
-        exit()
+        sys.exit('\n\nBuildServers Failed')
 
 def buildFSTAB(clusterDictionary,diskCNT):
     logging.debug('buildFSTAB Started with ' + str(diskCNT) + ' Drives')
