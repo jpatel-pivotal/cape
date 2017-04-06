@@ -141,7 +141,7 @@ def verifyInstall(masterNode, clusterDictionary):
     numberSegments = int(clusterDictionary["segmentCount"])
     logging.debug('SegCount: ' + str(numberSegments))
     totalSegmentDBs = numberSegments * int(clusterDictionary["segmentDBs"])
-    logging.debug('TotalSegmentDBs in CLuster: ' + str(totalSegmentDBs))
+    logging.debug('TotalSegmentDBs in Cluster: ' + str(totalSegmentDBs))
     #totalSegmentDBs = numberSegments * int(os.environ.get("SEGMENTDBS"))
 
 
@@ -173,9 +173,15 @@ def verifyInstall(masterNode, clusterDictionary):
             else:
                 print (masterNode["nodeName"] + ": Performing detailed database verification")
                 (stdin, stdout, stderr) = ssh.exec_command(
-                    "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'u';\"")
-                upSegments = int((stdout.readlines())[2])
-                logging.debug('UpSegements: ' + str(upSegments))
+                    "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'u' and role = 'p';\"")
+                upPrimarySegments = int((stdout.readlines())[2])
+                logging.debug('upPrimarySegements: ' + str(upPrimarySegments))
+                logging.debug(stderr.readlines())
+
+                (stdin, stdout, stderr) = ssh.exec_command(
+                    "psql -c \"SELECT count(*) FROM gp_segment_configuration WHERE content >= 0 and status = 'u' and role = 'm';\"")
+                upMirrorSegments = int((stdout.readlines())[2])
+                logging.debug('upMirrorSegements: ' + str(upMirrorSegments))
                 logging.debug(stderr.readlines())
 
                 (stdin, stdout, stderr) = ssh.exec_command(
@@ -205,8 +211,8 @@ def verifyInstall(masterNode, clusterDictionary):
 
                 connected = True
 
-                if (totalSegmentDBs == upSegments) and (totalSegmentDBs == primarySegments):
-                    if 'yes' in os.environ['MIRRORS'] and (totalSegmentDBs != mirrorSegments):
+                if (totalSegmentDBs == upPrimarySegments) and (totalSegmentDBs == primarySegments):
+                    if 'yes' in os.environ['MIRRORS'] and (totalSegmentDBs == upMirrorSegments) and (totalSegmentDBs != mirrorSegments):
                         print clusterDictionary[
                               "clusterName"] + ": Something went wrong with the Database mirror initialization, please verify manually"
                         logging.info('GPDB Mirror Counts do not match. Failing to Verify!')
@@ -708,8 +714,13 @@ def initDB(clusterNode, clusterName):
             # Basically no replacement but doing this to make coede readable and work smoothly
             gpConfigTemplateMasterDir = gpConfigTemplateModData.replace("MASTER_DIRECTORY=/data/disk1/master","MASTER_DIRECTORY=/data/disk1/master")
         gpConfigDirectoriesData = gpConfigTemplateMasterDir.replace("declare -a DATA_DIRECTORY=(/data/primary /data/primary)","declare -a DATA_DIRECTORY=("+dataDirectories+")")
-        gpConfigTemplateData  = gpConfigDirectoriesData.replace("declare -a MIRROR_DATA_DIRECTORY=(/data/mirror /data/mirror)","declare -a MIRROR_DATA_DIRECTORY=("+mirrorDirectories+")")
 
+        if 'yes' in os.environ["MIRRORS"]:
+            gpConfigTemplateData = gpConfigDirectoriesData + '\n#### MIRROR PARAMETERS\n' \
+                                                           + 'MIRROR_PORT_BASE=5000\n' \
+                                                           + 'REPLICATION_PORT_BASE=41000\n' \
+                                                           + 'MIRROR_REPLICATION_PORT_BASE=51000\n' \
+                                                           + 'declare -a MIRROR_DATA_DIRECTORY=(%s)\n' % mirrorDirectories
 
     with open(os.environ["CAPE_HOME"] + "/clusterConfigs/" + str(clusterName) + "/gpinitsystem_config",
               'w') as gpConfigCluster:
