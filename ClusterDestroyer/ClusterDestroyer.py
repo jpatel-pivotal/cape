@@ -31,7 +31,7 @@ def destroyServers(clusterDictionary):
 
         nodes = driver.list_nodes(ex_zone=str(os.environ["ZONE"]))
         for node in nodes:
-            if clusterDictionary["clusterName"] in node.name:
+            if clusterDictionary["clusterName"] == node.name:
                 nodeList.append(node)
                 # print node
                 # print node.extra
