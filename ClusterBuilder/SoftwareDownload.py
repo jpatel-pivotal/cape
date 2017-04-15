@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import threading
 import time
 import warnings
@@ -31,11 +32,11 @@ def downloadSoftware(clusterDictionary):
     response = requests.get(releasesURL)
     res = json.loads(response.text)
     # GET LATEST RELEASE
-    latest = 0
+    latest = ['0', '0', '0']
     for versions in res["releases"]:
-        versionInt = int(str(versions["version"]).replace(".", ""))
-        if (versionInt > latest):
-            latest = versionInt;
+        versionSplit = [i for i in re.split(r'(\d+).', str(versions["version"])) if i][0:3]
+        if (versionSplit > latest):
+            latest = versionSplit;
             latestVersion = versions
 
             # # GET DOWNLOAD URL AND FILENAME
