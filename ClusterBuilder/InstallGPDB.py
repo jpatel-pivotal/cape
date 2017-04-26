@@ -721,6 +721,8 @@ def initDB(clusterNode, clusterName):
                                                            + 'REPLICATION_PORT_BASE=41000\n' \
                                                            + 'MIRROR_REPLICATION_PORT_BASE=51000\n' \
                                                            + 'declare -a MIRROR_DATA_DIRECTORY=(%s)\n' % mirrorDirectories
+        else:
+            gpConfigTemplateData = gpConfigDirectoriesData
 
     with open(os.environ["CAPE_HOME"] + "/clusterConfigs/" + str(clusterName) + "/gpinitsystem_config",
               'w') as gpConfigCluster:
