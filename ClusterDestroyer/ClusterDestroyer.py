@@ -38,11 +38,8 @@ def destroyServers(clusterDictionary):
 
         logging.info('List of all Node Names to delete: {0}'.format(",".join(delNames)))
 
-        nodeList = [x for x in delNames if x in nodes]
-
-        logging.debug('Will request delete of Nodes: {0}'.format(",".join(nodeList)))
-
-
+        nodeList = [node for x in delNames for node in nodes if x in node.name]
+        logging.debug("Nodes being deleted {0}".format(nodeList))
 
         delnodes = driver.ex_destroy_multiple_nodes(nodeList,
                                                     ignore_errors=True,
