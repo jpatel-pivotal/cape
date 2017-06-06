@@ -45,7 +45,7 @@ def destroyServers(clusterDictionary):
                                                     ignore_errors=True,
                                                     destroy_boot_disk=False,
                                                     poll_interval=2,
-                                                    timeout=180)
+                                                    timeout=300)
         if (len(nodeList)) != (len(delnodes)):
             print clusterDictionary["clusterName"] + ": We may have deleted \
                 more nodes than expected!! "
