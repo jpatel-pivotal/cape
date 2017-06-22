@@ -24,8 +24,6 @@ gpconfig -c gp_filerep_tcp_keepalives_count -v 2000
 gpconfig -c gp_max_packet_size -v 1400
 # Don't flush metadata cache in between queries
 gpconfig -c optimizer_metadata_caching -v on --skipvalidation
-# Set Staement Mem to 8GB
-gpconfig -c statement_mem -v 1999MB
 # Setting GUCs we need for TPCDS runs
 gpconfig -c optimizer -v on --masteronly
 gpconfig -c gp_autostats_mode -v none --masteronly
