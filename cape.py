@@ -292,6 +292,7 @@ def cliParse():
             print clusterDictionary["clusterName"] + ": Creating a Greenplum Database Cluster"
             logging.info("Creating a Greenplum Database Cluster:" + clusterDictionary["clusterName"])
             logging.debug('With Dictionary: ' + json.dumps(clusterDictionary))
+            print clusterDictionary
             ClusterBuilder.buildServers(clusterDictionary)
             downloads = SoftwareDownload.downloadSoftware(clusterDictionary)
             InstallGPDB.installGPDB(clusterDictionary, downloads)
