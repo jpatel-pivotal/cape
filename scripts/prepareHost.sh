@@ -164,11 +164,6 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
 EOF
 	sudo yum -y update
 	sudo yum -y install gcsfuse
-	mkdir /tmp/bucketdir
-	sudo gcsfuse tpcds-1tb-data /tmp/bucketdir
-        touch filetxt.txt
-        sudo ls -al /tmp/bucketdir
-        sudo cp filetxt.txt /tmp/bucketdir/gpdb5/
 }
 
 _main() {
