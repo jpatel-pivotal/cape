@@ -135,7 +135,7 @@ installSoftware(){
     sudo yum -y install python27 python27-python-devel python27-python-pip python27-python-setuptools python27-python-tools python27-python-virtualenv
     sudo yum -y install python-pip python-devel lapack-devel
     sudo yum -y install sshpass git iperf3 dstat flex
-
+    sudo yum -y install pigz
 
     sudo pip install pip -U
     sudo pip install sh
