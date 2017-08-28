@@ -151,6 +151,20 @@ serverSetup(){
 
 }
 
+# We need this step because python 2.7 is needed by gsutil. We cannot use `pip
+# install gsutil` because that will not use the right python version
+# automatically.  This way, the executable in /usr/bin is kept as is to use the
+# right python version. This will also install other dependencies of gsutil
+# Also, to take advantage of parallel composite (read multi-part) upload &
+# download, we need the crcmod.
+setupGsutil(){
+    sudo bash <<EOF
+source /opt/rh/python27/enable
+pip install -U google-compute-engine
+pip install -U crcmod
+EOF
+}
+
 _main() {
     echo "prepareHost.sh received args: $@"
     check_args $1 $2
@@ -158,9 +172,8 @@ _main() {
     networkSetup
     setupDisk $1 $2
     installSoftware
+    setupGsutil
     serverSetup
-
-
 
 }
 
