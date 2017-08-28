@@ -82,7 +82,7 @@ def buildServers(clusterDictionary):
                                                 location=str(os.environ["ZONE"]),
                                                 ex_network='default', ex_tags=None, ex_metadata=None, ignore_errors=True,
                                                 use_existing_disk=False, poll_interval=2, external_ip='ephemeral',
-                                                ex_service_accounts=sa_scopes, timeout=180, description=None,
+                                                ex_service_accounts=None, timeout=180, description=None,
                                                 ex_can_ip_forward=None, ex_disks_gce_struct=gce_disk_struct,
                                                 ex_nic_gce_struct=None, ex_on_host_maintenance=None,
                                                 ex_automatic_restart=None)
