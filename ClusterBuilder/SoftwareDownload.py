@@ -31,6 +31,11 @@ def downloadSoftware(clusterDictionary):
             logging.debug('ProdID: ' + str(productId))
     response = requests.get(releasesURL)
     res = json.loads(response.text)
+
+    if response.status_code >= 400:
+        raise RuntimeError('ERROR: status code {sc} for GET {url}'.format(
+                sc=response.status_code, url=releasesURL))
+
     # GET LATEST RELEASE
     latest = ['0', '0', '0']
     for versions in res["releases"]:
@@ -39,15 +44,18 @@ def downloadSoftware(clusterDictionary):
             latest = versionSplit;
             latestVersion = versions
 
-            # # GET DOWNLOAD URL AND FILENAME
-
+    # GET DOWNLOAD URL AND FILENAME
     getURL = "https://network.pivotal.io/api/v2/products/" + package + "/releases/" + str(latestVersion["id"])
     logging.debug('latestVersion URL: ' + getURL)
     response = requests.get(getURL, headers=headers)
     responseJSON = json.loads(response.text)
     downloads = []
-    # ACCEPT EULA
 
+    if response.status_code >= 400:
+        raise RuntimeError('ERROR: status code {sc} for GET {url}'.format(
+                sc=response.status_code, url=getURL))
+
+    # ACCEPT EULA
     eulaURL = "https://network.pivotal.io/api/v2/products/" + package + "/releases/" + str(
         latestVersion["id"]) + "/eula_acceptance"
     response = requests.post(eulaURL, headers=headers)
