@@ -82,6 +82,7 @@ def downloadSoftware(clusterDictionary):
                             downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                             downloadFile["TARGET"] = 0
                             downloads.append(downloadFile)
+
             elif "Loader" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     if "Red Hat Enterprise Linux x86_64" in file["name"]:
@@ -89,6 +90,7 @@ def downloadSoftware(clusterDictionary):
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloadFile["TARGET"] = 0
                         downloads.append(downloadFile)
+
             elif "MADlib" in fileInfo["name"]:
                 latestVersion = "0.0"
                 for file in fileInfo["product_files"]:
@@ -97,7 +99,8 @@ def downloadSoftware(clusterDictionary):
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloadFile["TARGET"] = 2
-                downloads.append(downloadFile)
+                        downloads.append(downloadFile)
+
             elif "Language extensions" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     if "PL/R Extension for RHEL" in file["name"]:
@@ -105,6 +108,7 @@ def downloadSoftware(clusterDictionary):
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloadFile["TARGET"] = 2
                         downloads.append(downloadFile)
+
             elif "Clients" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     if "Clients for Red Hat Enterprise Linux x86_64" in file["name"]:
@@ -112,6 +116,7 @@ def downloadSoftware(clusterDictionary):
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloadFile["TARGET"] = 1
                         downloads.append(downloadFile)
+
         elif "pivotal-hdb" in clusterDictionary["clusterType"]:
             if "Software" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
@@ -119,11 +124,13 @@ def downloadSoftware(clusterDictionary):
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloads.append(downloadFile)
+
             elif "Language" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     downloadFile["URL"] = file["_links"]["download"].get("href")
                     downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                     downloads.append(downloadFile)
+
             elif "MADlib" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     if os.environ.get("MADLIB_VERSION") in file["name"]:
