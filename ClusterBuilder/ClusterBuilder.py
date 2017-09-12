@@ -115,7 +115,7 @@ def buildServers(clusterDictionary):
             clusterNode["internalIP"] = str(node).split(",")[4].split("'")[1]
             print "     " + nodeName + ": External IP: " + clusterNode["externalIP"]
             print "     " + nodeName + ": Internal IP: " + clusterNode["internalIP"]
-            if '000' in nodeName:
+            if is_master(nodeName):
                 with open('/tmp/gpdb-master-host-ip.txt', 'w') as fh:
                     fh.write(clusterNode["externalIP"])
             logging.debug('Created Node: ' + str(clusterNode))
@@ -146,6 +146,11 @@ def buildServers(clusterDictionary):
         logging.debug('Failed')
         print "Failing Process"
         sys.exit('\n\nBuildServers Failed')
+
+def is_master(nodeName):
+    """ ghetto, i know"""
+    return nodeName.endswith('-000')
+
 
 def buildFSTAB(clusterDictionary,diskCNT):
     logging.debug('buildFSTAB Started with ' + str(diskCNT) + ' Drives')
