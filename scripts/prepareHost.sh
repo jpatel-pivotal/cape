@@ -135,7 +135,7 @@ installSoftware(){
     sudo yum -y install python27 python27-python-devel python27-python-pip python27-python-setuptools python27-python-tools python27-python-virtualenv
     sudo yum -y install python-pip python-devel lapack-devel
     sudo yum -y install sshpass git iperf3 dstat flex
-
+    sudo yum -y install pigz
 
     sudo pip install pip -U
     sudo pip install sh
@@ -151,7 +151,19 @@ serverSetup(){
 
 }
 
-
+# We need this step because python 2.7 is needed by gsutil. We cannot use `pip
+# install gsutil` because that will not use the right python version
+# automatically.  This way, the executable in /usr/bin is kept as is to use the
+# right python version. This will also install other dependencies of gsutil
+# Also, to take advantage of parallel composite (read multi-part) upload &
+# download, we need the crcmod.
+setupGsutil(){
+    sudo bash <<EOF
+source /opt/rh/python27/enable
+pip install -U google-compute-engine
+pip install -U crcmod
+EOF
+}
 
 _main() {
     echo "prepareHost.sh received args: $@"
@@ -160,9 +172,8 @@ _main() {
     networkSetup
     setupDisk $1 $2
     installSoftware
+    setupGsutil
     serverSetup
-
-
 
 }
 

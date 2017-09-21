@@ -1,4 +1,5 @@
 import os
+import sys
 import threading
 import time
 import warnings
@@ -81,7 +82,7 @@ def buildServers(clusterDictionary):
                                                 location=str(os.environ["ZONE"]),
                                                 ex_network='default', ex_tags=None, ex_metadata=None, ignore_errors=True,
                                                 use_existing_disk=False, poll_interval=2, external_ip='ephemeral',
-                                                ex_service_accounts=None, timeout=180, description=None,
+                                                ex_service_accounts=sa_scopes, timeout=180, description=None,
                                                 ex_can_ip_forward=None, ex_disks_gce_struct=gce_disk_struct,
                                                 ex_nic_gce_struct=None, ex_on_host_maintenance=None,
                                                 ex_automatic_restart=None)
@@ -114,6 +115,9 @@ def buildServers(clusterDictionary):
             clusterNode["internalIP"] = str(node).split(",")[4].split("'")[1]
             print "     " + nodeName + ": External IP: " + clusterNode["externalIP"]
             print "     " + nodeName + ": Internal IP: " + clusterNode["internalIP"]
+            if is_master(nodeName):
+                with open('/tmp/gpdb-master-host-ip.txt', 'w') as fh:
+                    fh.write(clusterNode["externalIP"])
             logging.debug('Created Node: ' + str(clusterNode))
 
             prepThread = threading.Thread(target=prepServer, args=(clusterDictionary,clusterNode, nodeCnt))
@@ -141,7 +145,12 @@ def buildServers(clusterDictionary):
         logging.debug(traceback.print_exc())
         logging.debug('Failed')
         print "Failing Process"
-        exit()
+        sys.exit('\n\nBuildServers Failed')
+
+def is_master(nodeName):
+    """ ghetto, i know"""
+    return nodeName.endswith('-000')
+
 
 def buildFSTAB(clusterDictionary,diskCNT):
     logging.debug('buildFSTAB Started with ' + str(diskCNT) + ' Drives')

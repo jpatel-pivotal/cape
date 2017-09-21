@@ -2,17 +2,28 @@
 # We us this file to set GUCs for GPDB if SET_GUCS=yes in config.env
 # We don't run this if SET_GUCS=no.
 
-gpconfig -c gp_interconnect_type -v TCP
+VERSION=$(psql -t -A -c "SELECT CASE WHEN POSITION ('Greenplum Database 4.3' IN version) > 0 THEN 'gpdb_4_3' WHEN POSITION ('Greenplum Database 5.0' IN version) > 0 THEN 'gpdb_5_0' ELSE 'OTHER' END FROM version();")
+
+if [[ "$VERSION" == "gpdb_4_3" ]]; then
+  echo "Setting GUCs for GPDB 4.3"
+  # gpconfig -c gp_interconnect_type -v TCP
+  # gpconfig -c gp_interconnect_tcp_listener_backlog -v 2048 --skipvalidation
+else
+  echo "setting GUCs for GPDB 5.0"
+fi
+
+
 gpconfig -c gp_interconnect_transmit_timeout -v 3600
-gpconfig -c gp_interconnect_tcp_listener_backlog -v 2048 --skipvalidation
 gpconfig -c gp_fts_probe_interval -v 5min
 gpconfig -c gp_fts_probe_timeout -v 60s
 gpconfig -c gp_interconnect_log_stats -v true -m true --skipvalidation
-gpconfig -c gp_log_interconnect -v debug -m debug --skipvalidation
-gpconfig -c gp_log_fts -v debug -m debug --skipvalidation
+# Removing for now per Venky
+# gpconfig -c gp_log_interconnect -v debug -m debug --skipvalidation
+# gpconfig -c gp_log_fts -v debug -m debug --skipvalidation
 gpconfig -c gp_filerep_tcp_keepalives_count -v 2000
 gpconfig -c gp_max_packet_size -v 1400
-
+# Don't flush metadata cache in between queries
+gpconfig -c optimizer_metadata_caching -v on --skipvalidation
 # Setting GUCs we need for TPCDS runs
 gpconfig -c optimizer -v on --masteronly
 gpconfig -c gp_autostats_mode -v none --masteronly

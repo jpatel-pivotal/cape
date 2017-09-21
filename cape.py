@@ -13,7 +13,6 @@ from ClusterBuilder import SoftwareDownload
 from ClusterDestroyer import ClusterDestroyer
 from QueryCluster import QueryCluster
 
-
 def checkRequiredVars(args):
     logging.info('Checking Required Variables')
     # Will use this list of allowed values to check variables against
@@ -110,6 +109,13 @@ def checkRequiredVars(args):
             sys.exit('Failed! Add RAID0=<yes|no> to your ' +
                      args.config + ' file.\n If yes, we will create ' +
                      'a RADID0 volume using all data drives.\n')
+    if os.environ["MIRRORS"] is not None:
+        if any(x in os.environ["MIRRORS"] for x in allowed):
+            logging.debug('MIRRORS: ' + str(os.environ["MIRRORS"]))
+        else:
+            sys.exit('Failed! Add MIRRORS=<yes|no> to your ' +
+                     args.config + ' file.\n If yes, we will create ' +
+                     'MIRRORS using all data drives.\n')
     # Check required params we will use to deploy GPDB
     if os.environ["PIVNET_APIKEY"] is not None:
         logging.debug('PIVNET_APIKEY: ' + str(os.environ["PIVNET_APIKEY"]))

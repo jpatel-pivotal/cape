@@ -28,22 +28,24 @@ def destroyServers(clusterDictionary):
                                project=str(os.environ["PROJECT"]),
                                datacenter=str(os.environ["ZONE"]))
         nodeList = []
-
+        delNames = []
+        # get a list of nodes from the Cloud Provider
         nodes = driver.list_nodes(ex_zone=str(os.environ["ZONE"]))
-        for node in nodes:
-            if clusterDictionary["clusterName"] in node.name:
-                nodeList.append(node)
-                # print node
-                # print node.extra
+        numNodes = int(clusterDictionary["nodeQty"])
+        # Create a list of node names to delete
+        for i in range(0, int(numNodes)):
+            delNames.append(clusterDictionary["clusterName"] + "-00" + str(i))
 
-        logging.info('Deleting nodes that have ' +
-                     clusterDictionary["clusterName"] +
-                     ' in their name.')
+        logging.info('List of all Node Names to delete: {0}'.format(",".join(delNames)))
+
+        nodeList = [node for x in delNames for node in nodes if x in node.name]
+        logging.debug("Nodes being deleted {0}".format(nodeList))
+
         delnodes = driver.ex_destroy_multiple_nodes(nodeList,
                                                     ignore_errors=True,
                                                     destroy_boot_disk=False,
                                                     poll_interval=2,
-                                                    timeout=180)
+                                                    timeout=300)
         if (len(nodeList)) != (len(delnodes)):
             print clusterDictionary["clusterName"] + ": We may have deleted \
                 more nodes than expected!! "

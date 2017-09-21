@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import threading
 import time
 import warnings
@@ -30,23 +31,31 @@ def downloadSoftware(clusterDictionary):
             logging.debug('ProdID: ' + str(productId))
     response = requests.get(releasesURL)
     res = json.loads(response.text)
+
+    if response.status_code >= 400:
+        raise RuntimeError('ERROR: status code {sc} for GET {url}'.format(
+                sc=response.status_code, url=releasesURL))
+
     # GET LATEST RELEASE
-    latest = 0
+    latest = ['0', '0', '0']
     for versions in res["releases"]:
-        versionInt = int(str(versions["version"]).replace(".", ""))
-        if (versionInt > latest):
-            latest = versionInt;
+        versionSplit = [i for i in re.split(r'(\d+).', str(versions["version"])) if i][0:3]
+        if (versionSplit > latest):
+            latest = versionSplit;
             latestVersion = versions
 
-            # # GET DOWNLOAD URL AND FILENAME
-
+    # GET DOWNLOAD URL AND FILENAME
     getURL = "https://network.pivotal.io/api/v2/products/" + package + "/releases/" + str(latestVersion["id"])
     logging.debug('latestVersion URL: ' + getURL)
     response = requests.get(getURL, headers=headers)
     responseJSON = json.loads(response.text)
     downloads = []
-    # ACCEPT EULA
 
+    if response.status_code >= 400:
+        raise RuntimeError('ERROR: status code {sc} for GET {url}'.format(
+                sc=response.status_code, url=getURL))
+
+    # ACCEPT EULA
     eulaURL = "https://network.pivotal.io/api/v2/products/" + package + "/releases/" + str(
         latestVersion["id"]) + "/eula_acceptance"
     response = requests.post(eulaURL, headers=headers)
@@ -73,6 +82,7 @@ def downloadSoftware(clusterDictionary):
                             downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                             downloadFile["TARGET"] = 0
                             downloads.append(downloadFile)
+
             elif "Loader" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     if "Red Hat Enterprise Linux x86_64" in file["name"]:
@@ -80,6 +90,7 @@ def downloadSoftware(clusterDictionary):
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloadFile["TARGET"] = 0
                         downloads.append(downloadFile)
+
             elif "MADlib" in fileInfo["name"]:
                 latestVersion = "0.0"
                 for file in fileInfo["product_files"]:
@@ -88,7 +99,8 @@ def downloadSoftware(clusterDictionary):
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloadFile["TARGET"] = 2
-                downloads.append(downloadFile)
+                        downloads.append(downloadFile)
+
             elif "Language extensions" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     if "PL/R Extension for RHEL" in file["name"]:
@@ -96,6 +108,7 @@ def downloadSoftware(clusterDictionary):
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloadFile["TARGET"] = 2
                         downloads.append(downloadFile)
+
             elif "Clients" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     if "Clients for Red Hat Enterprise Linux x86_64" in file["name"]:
@@ -103,6 +116,7 @@ def downloadSoftware(clusterDictionary):
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloadFile["TARGET"] = 1
                         downloads.append(downloadFile)
+
         elif "pivotal-hdb" in clusterDictionary["clusterType"]:
             if "Software" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
@@ -110,11 +124,13 @@ def downloadSoftware(clusterDictionary):
                         downloadFile["URL"] = file["_links"]["download"].get("href")
                         downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                         downloads.append(downloadFile)
+
             elif "Language" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     downloadFile["URL"] = file["_links"]["download"].get("href")
                     downloadFile["NAME"] = str(file["aws_object_key"]).split("/")[2]
                     downloads.append(downloadFile)
+
             elif "MADlib" in fileInfo["name"]:
                 for file in fileInfo["product_files"]:
                     if os.environ.get("MADLIB_VERSION") in file["name"]:
